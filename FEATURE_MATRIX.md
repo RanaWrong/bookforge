@@ -5,9 +5,9 @@ This is a planning/status document. All features start as **Planned** until code
 | Area | Feature | Priority | Phase | Initial acceptance evidence | Status |
 |---|---|---:|---:|---|---|
 | Foundation | Next.js, TypeScript strict, lint, tests, CI | P0 | 1 | Clean install and CI run | Planned |
-| Data | PostgreSQL + Prisma migrations | P0 | 1 | Clean DB migration test | Planned |
-| Dashboard | Book list, create, rename, archive, delete | P0 | 2 | CRUD integration tests | Planned |
-| Structure | Parts, chapters, ordering | P0 | 2 | Persisted reorder tests | Planned |
+| Data | PostgreSQL + Prisma migrations | P0 | 1 | Schema/client checks passed; live migration pending (docs/database-verification.md) | Implemented |
+| Dashboard | Book list, create, rename, delete (archive deferred) | P0 | 2 | UI/services implemented; live CRUD suite pending | Implemented |
+| Structure | Chapters and ordering (parts deferred) | P0 | 2 | Transactional operations implemented; PostgreSQL concurrency tests pending | Implemented |
 | Editor | Visual TipTap editor | P0 | 3 | Editor interaction tests | Planned |
 | Editor | Markdown/source mode | P0 | 3 | Round-trip conversion tests | Planned |
 | Editor | Autosave and conflict handling | P0 | 3 | Save failure/conflict tests | Planned |

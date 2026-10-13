@@ -182,3 +182,18 @@
 
 ## Status tracking
 A phase is **Planned** until implementation exists, **In Progress** while being built, and **Verified** only after its exit criteria have evidence. Do not use “complete” based on code generation alone.
+
+## Database slice implementation (2026-10-13)
+
+The minimal User/Book/Chapter schema, Prisma 7 client, owner-scoped reads, migration, private Compose database, migration job and operations documentation are implemented. Phase 1 remains In Progress: live migration/container checks and broader seed/CI/health-route work are not claimed complete. See docs/database-verification.md for the original phase's evidence.
+
+## Management slice implementation (2026-10-14)
+
+Book list/create/rename/delete, chapter create/rename/move/delete, manual plain-text
+editing/saving, ownership enforcement and server validation are implemented.
+Production authentication remains deferred; an opt-in development-only adapter is
+explicitly marked in the UI and disabled in production. The additive revision
+migration prevents stale content overwrites. Parts, archive/restore, rich editing,
+PDF, and full revision history are not part of this slice. Live PostgreSQL and
+interactive browser verification remain pending; Phase 2 is not marked Verified.
+See docs/management-verification.md for checks and next steps.

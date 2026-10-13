@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f8f7f4;
+  --foreground: #20201e;
+  --surface: #ffffff;
+  --border: #e6e2dc;
+  --muted: #6b6964;
+  --accent: #285b4b;
+  --danger: #9d2929;
+}
+
+* { box-sizing: border-box; }
+html, body { min-height: 100%; }
+body {
+  margin: 0;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, "Noto Sans Bengali", sans-serif;
+}
+button, select { font: inherit; }
+input, textarea { font: inherit; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.bf-panel { border: 1px solid var(--border); border-radius: 1rem; background: var(--surface); padding: 1.25rem; }
+.bf-button { min-height: 2.5rem; border: 1px solid var(--border); border-radius: .6rem; padding: .45rem .8rem; background: var(--surface); font-size: .875rem; cursor: pointer; }
+.bf-button:hover:not(:disabled) { border-color: var(--accent); }
+.bf-button[aria-pressed="true"], .bf-primary { background: var(--accent); color: white; }
+.bf-danger { background: var(--danger); color: white; }
+button:disabled { cursor: not-allowed; opacity: .55; }
+.bf-input { width: 100%; border: 1px solid var(--border); border-radius: .6rem; padding: .75rem; background: var(--surface); }

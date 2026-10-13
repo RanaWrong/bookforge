@@ -1,0 +1,48 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(uuid()) @db.Uuid
+  email     String   @unique @db.VarChar(320)
+  name      String?  @db.VarChar(200)
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+  books     Book[]
+}
+
+model Book {
+  id          String    @id @default(uuid()) @db.Uuid
+  ownerId     String    @db.Uuid
+  owner       User      @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+  title       String    @db.VarChar(300)
+  description String?   @db.Text
+  language    String    @default("bn") @db.VarChar(35)
+  createdAt   DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime  @updatedAt @db.Timestamptz(3)
+  chapters    Chapter[]
+
+  @@index([ownerId, updatedAt])
+}
+
+model Chapter {
+  id                   String   @id @default(uuid()) @db.Uuid
+  bookId               String   @db.Uuid
+  book                 Book     @relation(fields: [bookId], references: [id], onDelete: Restrict)
+  title                String   @db.VarChar(300)
+  position             Int
+  // Canonical editor document; sourceMarkdown preserves import input only.
+  content              Json?    @db.JsonB
+  contentSchemaVersion Int      @default(1)
+  revision             Int      @default(0)
+  sourceMarkdown       String?  @db.Text
+  createdAt            DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt            DateTime @updatedAt @db.Timestamptz(3)
+
+  @@unique([bookId, position])
+}

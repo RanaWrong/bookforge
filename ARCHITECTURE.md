@@ -142,3 +142,44 @@ Create a short record in docs/decisions/ whenever a decision is difficult to rev
 - Import and export use explicit adapters.
 - Content and settings used for an export are reproducible from stored revision/settings snapshots.
 - No production secret is required in source control.
+
+## Implemented database foundation
+
+Prisma 7.10 uses prisma.config.ts for CLI connection configuration and explicit dotenv loading. The schema declares PostgreSQL; generated TypeScript is ignored under src/generated/prisma. The server-only client uses the pg adapter, a bounded pool and lazy global caching for hot reload. Future database routes must use the Node runtime, not Edge. Static builds need no database credentials.
+
+User -> Book -> Chapter uses UUID primary keys and required foreign keys. User email is unique; future identity code must normalize email before writing. Book indexes ownerId/updatedAt. Chapter uniquely indexes bookId/position. Deletes are restricted to prevent accidental manuscript cascades. Chapters inherit ownership through Book, avoiding contradictory owner IDs. Every booksForOwner query filters by owner; chapter queries also verify the book pairing. Production identity must come from a trusted session. The management MVP exposes server actions only through an explicitly enabled development identity adapter; all actions reject production access until real authentication exists.
+
+Book title, description and a BCP-47 language string provide minimal metadata. PostgreSQL UTF-8 supports Bangla and mixed-language text. Nullable chapter JSONB is reserved for the canonical structured editor document and has a content schema version. sourceMarkdown preserves original import input, not a second editable source of truth. The editor phase must validate document JSON and implement loss-aware conversion. Revision, publishing, design, and collaboration tables are deferred.
+
+The initial migration adds nonnegative position and positive content schema version checks. Reordering uses transactions and temporary free positions to avoid unique collisions. Timestamps use timestamptz; updatedAt is maintained by Prisma, not a database trigger. Chapter mutations update the parent book timestamp in the same transaction.
+
+## Book and chapter management (2026-10-14)
+
+The /dashboard client calls Next Server Actions. Every action resolves identity on
+the server before invoking libraryForOwner. The current adapter requires both
+NODE_ENV=development and BOOKFORGE_DEV_IDENTITY=true and returns a fixed server-owned
+local account, never an ID from browser input. It is deliberately not production
+authentication. Server action error responses contain only known error codes.
+Server Actions provide the framework's same-origin protection; ownership remains
+an explicit database predicate, not a UI condition.
+
+All structural/content mutations lock the owned Book row using parameterized
+SELECT ... FOR UPDATE before accessing chapters. With PostgreSQL's default READ
+COMMITTED isolation, subsequent statements see the previous lock holder's committed
+changes. Create appends to the latest order; move swaps adjacent chapters; delete
+compacts positions. Reordering parks rows above the current maximum, then writes
+dense positions, all inside one transaction. Every future writer must follow the
+same parent-lock convention. Raw SQL only acquires the owner-filtered parent lock;
+CRUD operations use Prisma. Confirmed book deletion explicitly deletes owned
+chapters then the book, preserving the schema's restrictive foreign keys.
+
+The additive chapter_revision migration defaults existing rows to revision 0.
+Saving updates only the matching revision and increments it; stale writes return
+CONFLICT and roll back. JSONB currently stores a version-1 plain-text document.
+The plain editor refuses unknown document formats/versions so richer data cannot
+be silently flattened. sourceMarkdown remains preserved import input. Full history,
+autosave, rich-text conversion and real-time collaboration remain separate phases.
+
+Reference: [Next 15 data security](https://nextjs.org/docs/15/app/guides/data-security).
+
+Compose uses private PostgreSQL 17, a named persistent volume, and a health-gated migration service. Production migrations are deployment operations. The optional development override exposes PostgreSQL on loopback only. See README.md for role separation, backup, reset, and Coolify guidance.

@@ -1,0 +1,16 @@
+node_modules
+.next
+.next-build
+.git
+.env*
+!.env.example
+uploads
+storage
+coverage
+*.log
+src/generated/prisma
+backups
+secrets
+*.pem
+*.key
+*.tsbuildinfo

@@ -4,7 +4,7 @@
 BookForge is a bilingual (বাংলা + English) writing and publishing platform. Read PRD.md for requirements, ARCHITECTURE.md for system boundaries, IMPLEMENTATION_PLAN.md for delivery phases, and FEATURE_MATRIX.md for feature status.
 
 ## Current status
-Planning documents are being established first. Application functionality must not be marked complete until implemented and tested in the repository.
+The bilingual foundation, PostgreSQL/Prisma infrastructure, and book/chapter management MVP are implemented. The workspace uses an explicitly enabled local development identity; production access is blocked pending real authentication. Live PostgreSQL and browser interaction verification still require available services/tools; see docs/management-verification.md. Application functionality must not be marked verified until acceptance checks have actually passed.
 
 ## Development rules
 - TypeScript strict mode; avoid any and unsafe type assertions.
