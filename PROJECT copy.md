@@ -1,37 +1,36 @@
-# BookForge — Project Guide
+# Project Charter — BookForge
 
-## Purpose
-BookForge is a bilingual (বাংলা + English) writing and publishing platform. Read PRD.md for requirements, ARCHITECTURE.md for system boundaries, IMPLEMENTATION_PLAN.md for delivery phases, and FEATURE_MATRIX.md for feature status.
+## Vision
+A reliable writing and publishing workspace for books written in Bangla, English, or mixed Bangla-English. Authors can organize content by chapter, apply consistent global typography and page design, and export chapters or complete books to print-ready PDF.
 
-## Current status
-Planning documents are being established first. Application functionality must not be marked complete until implemented and tested in the repository.
+## Primary user
+Initially one author managing their own manuscripts. The architecture must support multiple accounts and workspaces later.
 
-## Development rules
-- TypeScript strict mode; avoid any and unsafe type assertions.
-- Validate all external input.
-- Enforce authorization on the server for every resource.
-- Keep manuscript content separate from design settings.
-- Never silently discard unsupported content during editor conversion or import.
-- Add tests for business logic and security boundaries.
-- Keep changes focused and commit in small, understandable units.
-- Do not commit secrets, real environment files, generated personal manuscripts, or production data.
+## Product principles
+1. Content and presentation are separate.
+2. Import is non-destructive: show warnings rather than silently discarding unsupported formatting.
+3. Every export is reproducible from content + a versioned design profile.
+4. Prefer the smallest correct implementation over premature microservices.
+5. Security and backups are foundational.
 
-## Planned local workflow
-The exact commands must match package.json after Phase 1 is implemented. Expected workflow:
-1. Install the documented Node.js version and package manager.
-2. Copy .env.example to a local environment file and configure local values.
-3. Start PostgreSQL with the documented development setup.
-4. Run database migrations.
-5. Start the development server.
-6. Run lint, type-check, tests, and production build before committing.
+## MVP scope
+- Project foundation and bilingual UI.
+- Book dashboard and chapter hierarchy.
+- Visual editor + Markdown source editor sharing a canonical content model.
+- DOCX, Markdown and ZIP import with a report.
+- Global typography and page layout settings.
+- Chapter and whole-book PDF export.
+- Authentication and per-user authorization before multi-user launch.
 
-Do not copy placeholder commands into production automation without verifying them against actual scripts.
+## Not MVP
+- Full LaTeX compiler compatibility.
+- Collaborative real-time editing.
+- Payments/subscriptions.
+- AI writing features.
+- Public publishing marketplace.
 
-## Environment variables
-Maintain a committed .env.example containing names and safe placeholders only. Required variables will be documented after the auth, database, and storage decisions are implemented. Never commit secrets.
-
-## Documentation index
-- [PRD](./PRD.md)
-- [Architecture](./ARCHITECTURE.md)
-- [Implementation plan](./IMPLEMENTATION_PLAN.md)
-- [Feature matrix](./FEATURE_MATRIX.md)
+## Acceptance criteria
+- Bangla and English interface strings can be switched without losing current work.
+- Content model is independent of print design.
+- Uploaded files are validated, size-limited, and stored outside public web roots.
+- PDF output is tested against real Bangla/English manuscripts.

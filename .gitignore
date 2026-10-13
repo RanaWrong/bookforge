@@ -1,5 +1,6 @@
 node_modules
 .next
+.next-build/
 out
 dist
 coverage
@@ -13,3 +14,9 @@ coverage
 .idea
 uploads/
 storage/
+src/generated/prisma/
+*.tsbuildinfo
+backups/
+secrets/
+*.pem
+*.key
