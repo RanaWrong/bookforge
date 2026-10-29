@@ -23,7 +23,14 @@ export function libraryForOwner(ownerId: string, db: PrismaClient = getDb()) {
     async chapter(bookId: string, chapterId: string): Promise<ChapterDetail> {
       const chapter = await db.chapter.findFirst({ where: { id: id(chapterId), bookId: id(bookId), book: { ownerId: owner } } });
       if (!chapter) throw new LibraryError("NOT_FOUND");
-      return { id: chapter.id, title: chapter.title, position: chapter.position, revision: chapter.revision, document: loadDocument(chapter.content, chapter.contentSchemaVersion) };
+      return {
+        id: chapter.id,
+        title: chapter.title,
+        position: chapter.position,
+        revision: chapter.revision,
+        document: loadDocument(chapter.content, chapter.contentSchemaVersion),
+        text: chapter.contentSchemaVersion === 1 ? readText(chapter.content, chapter.contentSchemaVersion) : undefined,
+      };
     },
     async mutate(input: unknown): Promise<{ id: string; revision?: number }> {
       const command = parseMutation(input);

@@ -68,7 +68,7 @@ export function Workspace({ initialLocale }: { initialLocale: Locale }) {
   async function openChapter(chapterId: string) {
     if (!book || !mayLeave()) return;
     await work(async () => {
-      accept(await loadChapter(book.id, chapterId), (value) => { setChapter(value); setText(value.text); });
+      accept(await loadChapter(book.id, chapterId), (value) => { setChapter(value); setText(value.text ?? ""); });
     });
   }
   function showDialog(value: DialogState) {

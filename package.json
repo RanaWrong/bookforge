@@ -30,6 +30,7 @@
     "@codemirror/view": "6.43.14",
     "@prisma/adapter-pg": "7.10.0",
     "@prisma/client": "7.10.0",
+    "puppeteer-core": "^23.11.1",
     "@tiptap/core": "3.32.0",
     "@tiptap/extension-link": "3.32.0",
     "@tiptap/pm": "3.32.0",
@@ -42,6 +43,10 @@
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "server-only": "0.0.1"
+  },
+  "optionalDependencies": {
+    "@aws-sdk/client-s3": "3.1156.0",
+    "@aws-sdk/s3-request-presigner": "3.1156.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "3.3.7",

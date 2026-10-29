@@ -1,0 +1,355 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum WorkspaceRole {
+  OWNER
+  EDITOR
+  VIEWER
+}
+
+enum ChapterKind {
+  FRONTMATTER
+  CHAPTER
+  BACKMATTER
+}
+
+enum ExportStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum ExportScope {
+  BOOK
+  CHAPTER
+}
+
+// ──────────────────────────────────────────────────────────────
+//  Auth — added to workspace baseline; not in original 20261014000000_init
+//  but required by src/server/auth.ts (bf_session, scrypt, SHA-256)
+// ──────────────────────────────────────────────────────────────
+model Session {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  tokenHash String   @unique @map("token_hash")
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+}
+
+model User {
+  id                String            @id @default(uuid())
+  email             String            @unique
+  name              String
+  passwordHash      String?           @map("password_hash")
+  preferredLocale   String            @default("bn") @map("preferred_locale")
+  createdAt         DateTime          @default(now()) @map("created_at")
+  updatedAt         DateTime          @updatedAt @map("updated_at")
+  sessions          Session[]
+  workspaceMembers  WorkspaceMember[]
+  documentHistories DocumentHistory[]
+  exportJobs        ExportJob[]
+  invites           WorkspaceInvite[]
+  commentedBy       Comment[]         @relation("commentsAuthored")
+  resolvedComments  Comment[]         @relation("commentsResolved")
+
+  @@map("users")
+}
+
+model Workspace {
+  id                String            @id @default(uuid())
+  name              String
+  slug              String            @unique
+  createdAt         DateTime          @default(now()) @map("created_at")
+  updatedAt         DateTime          @updatedAt @map("updated_at")
+  members           WorkspaceMember[]
+  designProfiles    DesignProfile[]
+  books             Book[]
+  parts             Part[]
+  chapters          Chapter[]
+  documentHistories DocumentHistory[]
+  assets            Asset[]
+  importLogs        ImportLog[]
+  exportJobs        ExportJob[]
+  invites           WorkspaceInvite[]
+  comments          Comment[]
+
+  @@map("workspaces")
+}
+
+model WorkspaceMember {
+  id          String        @id @default(uuid())
+  workspaceId String        @map("workspace_id")
+  userId      String        @map("user_id")
+  role        WorkspaceRole @default(OWNER)
+  createdAt   DateTime      @default(now()) @map("created_at")
+  workspace   Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, userId])
+  @@index([userId])
+  @@map("workspace_members")
+}
+
+model DesignProfile {
+  id                   String    @id @default(uuid())
+  workspaceId          String    @map("workspace_id")
+  name                 String
+  version              Int       @default(1)
+  isPreset             Boolean   @default(false) @map("is_preset")
+  pageSize             String    @default("215x275mm") @map("page_size")
+  widthMm              Float     @default(215) @map("width_mm")
+  heightMm             Float     @default(275) @map("height_mm")
+  mirrorMargins        Boolean   @default(true) @map("mirror_margins")
+  marginTopMm          Float     @default(18) @map("margin_top_mm")
+  marginBottomMm       Float     @default(20) @map("margin_bottom_mm")
+  marginInsideMm       Float     @default(22) @map("margin_inside_mm")
+  marginOutsideMm      Float     @default(16) @map("margin_outside_mm")
+  gutterMm             Float     @default(5) @map("gutter_mm")
+  banglaBodyFont       String    @default("Noto Serif Bengali") @map("bangla_body_font")
+  banglaHeadingFont    String    @default("Noto Sans Bengali") @map("bangla_heading_font")
+  latinFont            String    @default("Inter") @map("latin_font")
+  bodyFontSizePt       Float     @default(11) @map("body_font_size_pt")
+  lineHeight           Float     @default(1.5) @map("line_height")
+  paragraphSpacingPt   Float     @default(6) @map("paragraph_spacing_pt")
+  primaryColor         String    @default("#123B6D") @map("primary_color")
+  accentColor          String    @default("#F26B21") @map("accent_color")
+  runningHeaderLeft    String    @default("BOOK_TITLE") @map("running_header_left")
+  runningHeaderRight   String    @default("CHAPTER_TITLE") @map("running_header_right")
+  pageNumberPlacement  String    @default("OUTSIDE_CORNER") @map("page_number_placement")
+  chapterStartsNewPage Boolean   @default(true) @map("chapter_starts_new_page")
+  watermarkText        String?   @map("watermark_text")
+  includeQrCode        Boolean   @default(false) @map("include_qr_code")
+  createdAt            DateTime  @default(now()) @map("created_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
+  workspace            Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  books                Book[]
+
+  @@index([workspaceId])
+  @@map("design_profiles")
+}
+
+model Book {
+  id              String         @id @default(uuid())
+  workspaceId     String         @map("workspace_id")
+  designProfileId String?        @map("design_profile_id")
+  title           String
+  subtitle        String?
+  author          String
+  language        String         @default("bn")
+  isbn            String?
+  description     String?        @db.Text
+  targetWordCount Int            @default(45000) @map("target_word_count")
+  createdAt       DateTime       @default(now()) @map("created_at")
+  updatedAt       DateTime       @updatedAt @map("updated_at")
+  workspace       Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  designProfile   DesignProfile? @relation(fields: [designProfileId], references: [id], onDelete: SetNull)
+  parts           Part[]
+  chapters        Chapter[]
+  assets          Asset[]
+  importLogs      ImportLog[]
+  exportJobs      ExportJob[]
+
+  @@index([workspaceId])
+  @@map("books")
+}
+
+model Part {
+  id          String    @id @default(uuid())
+  workspaceId String    @map("workspace_id")
+  bookId      String    @map("book_id")
+  title       String
+  subtitle    String?
+  position    Int
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  book        Book      @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  chapters    Chapter[]
+
+  @@unique([bookId, position])
+  @@index([workspaceId, bookId])
+  @@map("parts")
+}
+
+model Chapter {
+  id                   String            @id @default(uuid())
+  workspaceId          String            @map("workspace_id")
+  bookId               String            @map("book_id")
+  partId               String?           @map("part_id")
+  kind                 ChapterKind       @default(CHAPTER)
+  title                String
+  slug                 String
+  position             Int
+  markdown             String            @default("") @db.Text
+  canonicalJson        String            @default("{\"schemaVersion\":1,\"blocks\":[]}") @map("canonical_json") @db.Text
+  schemaVersion        Int               @default(1) @map("schema_version")
+  wordCount            Int               @default(0) @map("word_count")
+  characterCount       Int               @default(0) @map("character_count")
+  revisionNumber       Int               @default(1) @map("revision_number")
+  // Legacy TipTap JSONB column kept for libraryForOwner compatibility (src/modules/books/service.ts)
+  content              Json?             @db.JsonB
+  contentSchemaVersion Int               @default(1) @map("content_schema_version")
+  sourceMarkdown       String?           @map("source_markdown") @db.Text
+  // Optimistic concurrency counter used by src/modules/books/service.ts (revision)
+  revision             Int               @default(0)
+  createdAt            DateTime          @default(now()) @map("created_at")
+  updatedAt            DateTime          @updatedAt @map("updated_at")
+  workspace            Workspace         @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  book                 Book              @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  part                 Part?             @relation(fields: [partId], references: [id], onDelete: SetNull)
+  documentHistories    DocumentHistory[]
+  exportJobs           ExportJob[]
+  yjsSnapshot          YjsSnapshot?
+  comments             Comment[]
+
+  @@unique([bookId, position])
+  @@index([workspaceId, bookId])
+  @@map("chapters")
+}
+
+model DocumentHistory {
+  id             String    @id @default(uuid())
+  workspaceId    String    @map("workspace_id")
+  chapterId      String    @map("chapter_id")
+  revisionNumber Int       @map("revision_number")
+  label          String?
+  markdown       String    @db.Text
+  canonicalJson  String    @map("canonical_json") @db.Text
+  schemaVersion  Int       @default(1) @map("schema_version")
+  createdById    String?   @map("created_by_id")
+  restoredFromId String?   @map("restored_from_id")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  workspace      Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  chapter        Chapter   @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  createdBy      User?     @relation(fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@unique([chapterId, revisionNumber])
+  @@index([workspaceId, chapterId])
+  @@map("document_history")
+}
+
+model Asset {
+  id          String    @id @default(uuid())
+  workspaceId String    @map("workspace_id")
+  bookId      String?   @map("book_id")
+  filename    String
+  mimeType    String    @map("mime_type")
+  sizeBytes   Int       @map("size_bytes")
+  altText     String    @default("") @map("alt_text")
+  storageKey  String    @unique @map("storage_key")
+  sha256      String
+  createdAt   DateTime  @default(now()) @map("created_at")
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  book        Book?     @relation(fields: [bookId], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId, bookId])
+  @@map("assets")
+}
+
+model ImportLog {
+  id            String    @id @default(uuid())
+  workspaceId   String    @map("workspace_id")
+  bookId        String?   @map("book_id")
+  sourceType    String    @map("source_type")
+  filename      String
+  sizeBytes     Int       @map("size_bytes")
+  chaptersCount Int       @default(0) @map("chapters_count")
+  warningsJson  String    @default("[]") @map("warnings_json") @db.Text
+  status        String    @default("COMPLETED")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  workspace     Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  book          Book?     @relation(fields: [bookId], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId])
+  @@map("import_logs")
+}
+
+model ExportJob {
+  id                    String       @id @default(uuid())
+  workspaceId           String       @map("workspace_id")
+  bookId                String       @map("book_id")
+  chapterId             String?      @map("chapter_id")
+  requestedById         String?      @map("requested_by_id")
+  scope                 ExportScope  @default(BOOK)
+  status                ExportStatus @default(PENDING)
+  designProfileSnapshot String       @map("design_profile_snapshot") @db.Text
+  pageCount             Int?         @map("page_count")
+  fileSizeBytes         Int?         @map("file_size_bytes")
+  format                String       @default("PDF")
+  outputStorageKey      String?      @map("output_storage_key")
+  downloadUrl           String?      @map("download_url")
+  warningsJson          String       @default("[]") @map("warnings_json") @db.Text
+  errorMessage          String?      @map("error_message") @db.Text
+  createdAt             DateTime     @default(now()) @map("created_at")
+  completedAt           DateTime?    @map("completed_at")
+  workspace             Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  book                  Book         @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  chapter               Chapter?     @relation(fields: [chapterId], references: [id], onDelete: SetNull)
+  requestedBy           User?        @relation(fields: [requestedById], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId, bookId])
+  @@map("export_jobs")
+}
+
+model WorkspaceInvite {
+  id          String        @id @default(uuid())
+  workspaceId String        @map("workspace_id")
+  email       String
+  role        WorkspaceRole @default(EDITOR)
+  tokenHash   String        @unique @map("token_hash")
+  expiresAt   DateTime      @map("expires_at")
+  acceptedAt  DateTime?     @map("accepted_at")
+  createdById String?       @map("created_by_id")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  workspace   Workspace     @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  createdBy   User?         @relation(fields: [createdById], references: [id], onDelete: SetNull)
+
+  @@index([workspaceId])
+  @@index([expiresAt])
+  @@map("workspace_invites")
+}
+
+model YjsSnapshot {
+  id        String   @id @default(uuid())
+  chapterId String   @unique @map("chapter_id")
+  snapshot  Bytes
+  updatedAt DateTime @updatedAt @map("updated_at")
+  chapter   Chapter  @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+
+  @@map("yjs_snapshots")
+}
+
+model Comment {
+  id           String    @id @default(uuid())
+  workspaceId  String    @map("workspace_id")
+  chapterId    String    @map("chapter_id")
+  authorId     String?   @map("author_id")
+  anchorStart  Int       @map("anchor_start")
+  anchorEnd    Int       @map("anchor_end")
+  body         String    @db.Text
+  resolvedAt   DateTime? @map("resolved_at")
+  resolvedById String?   @map("resolved_by_id")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  workspace    Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  chapter      Chapter   @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  author       User?     @relation("commentsAuthored", fields: [authorId], references: [id], onDelete: SetNull)
+  resolvedBy   User?     @relation("commentsResolved", fields: [resolvedById], references: [id], onDelete: SetNull)
+
+  @@index([chapterId])
+  @@index([workspaceId, chapterId])
+  @@map("comments")
+}

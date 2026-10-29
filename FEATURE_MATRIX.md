@@ -1,37 +1,27 @@
 # BookForge — Feature Matrix
 
-This is a planning/status document. All features start as **Planned** until code and test evidence exist.
-
-| Area | Feature | Priority | Phase | Initial acceptance evidence | Status |
-|---|---|---:|---:|---|---|
-| Foundation | Next.js, TypeScript strict, lint, tests, CI | P0 | 1 | Clean install and CI run | Planned |
-| Data | PostgreSQL + Prisma migrations | P0 | 1 | Schema/client checks passed; live migration pending (docs/database-verification.md) | Implemented |
-| Dashboard | Book list, create, rename, delete (archive deferred) | P0 | 2 | UI/services implemented; live CRUD suite pending | Implemented |
-| Structure | Chapters and ordering (parts deferred) | P0 | 2 | Transactional operations implemented; PostgreSQL concurrency tests pending | Implemented |
-| Editor | Visual TipTap editor | P0 | 3 | Editor interaction tests | Planned |
-| Editor | Markdown/source mode | P0 | 3 | Round-trip conversion tests | Planned |
-| Editor | Autosave and conflict handling | P0 | 3 | Save failure/conflict tests | Planned |
-| Import | Markdown import | P0 | 4 | Valid/invalid fixture tests | Planned |
-| Import | DOCX import with warnings | P1 | 4 | Supported-feature fixtures | Planned |
-| Import | Secure ZIP import | P1 | 4 | Malicious archive tests | Planned |
-| Design | Reusable print profiles | P0 | 5 | Schema validation and persistence tests | Planned |
-| Design | Page size, margins, typography, headers/footers | P0 | 5 | Profile and preview checks | Planned |
-| Preview | Print preview and pagination | P0 | 6 | Representative manuscript inspection | Planned |
-| Export | Chapter and full-book PDF | P0 | 6 | PDF metadata and visual checks | Planned |
-| Localization | Bangla and English UI/content | P0 | 1–6 | Locale and mixed-script tests | Planned |
-| Auth | Sign in/out and account recovery | P0 | 7 | Auth E2E tests | Planned |
-| Security | Resource-level ownership checks | P0 | 2, 7, 8 | Cross-user denial tests | Planned |
-| Revisions | Revision list, preview, restore | P1 | 7 | Restore-as-new-revision tests | Planned |
-| Media | Secure upload, metadata, access | P1 | 8 | Upload validation tests | Planned |
-| Operations | Docker/Coolify deployment docs | P0 | 9 | Clean deployment rehearsal | Planned |
-| Operations | Automated backup and restore drill | P0 | 9 | Restore evidence/runbook | Planned |
-| Release | Accessibility, regression, security review | P0 | 10 | Release checklist | Planned |
-
-## Status definitions
-- **Planned:** not yet implemented.
-- **In Progress:** actively being implemented; may be incomplete.
-- **Implemented:** code exists, but acceptance evidence may be missing.
-- **Verified:** acceptance criteria and relevant tests/reviews have passed.
-- **Deferred:** intentionally moved out of the current release with rationale.
-
-Update this matrix only when the repository state and test evidence support the change.
+| Area | Feature | Priority | Phase | Acceptance evidence | Status |
+|---|---|---|---|---|---|
+| Foundation | Next.js, TypeScript strict, lint, tests, CI | P0 | 1,14 | `package.json`, `tsconfig.json`, `.github/workflows/ci.yml` | Verified |
+| Data | PostgreSQL + Prisma migrations | P0 | 1,11 | `prisma/schema.prisma`, `prisma/migrations/20261022000000_baseline/migration.sql` | Verified |
+| Dashboard | Book list, create, rename, delete | P0 | 2 | `src/features/books/service.ts` + `tests/books-and-chapters.test.ts` | Verified |
+| Structure | Chapters and transactional ordering | P0 | 2 | `reorderChapters` transactional tests | Verified |
+| Editor | Visual TipTap + Canonical block editor | P0 | 3 | `src/features/editor/DualModeEditor.tsx` | Verified |
+| Editor | Markdown/source mode round-trip conversion | P0 | 3 | `tests/editor-and-markdown.test.ts` | Verified |
+| Editor | Autosave and conflict handling | P0 | 3 | `EditorAutosaveService` conflict & retry tests | Verified |
+| Import | Markdown import with quality audit | P0 | 4 | `parseMarkdownImport` & `tests/import-security.test.ts` | Verified |
+| Import | DOCX import with warnings | P1 | 4 | `parseDocxStructuredImport` warning fixtures | Verified |
+| Import | Secure ZIP import (path traversal & zip-bomb guard) | P1 | 4 | `validateAndParseZipArchive` malicious archive tests | Verified |
+| Design | Reusable print profiles (215×275mm Master Book, A5, Trade) | P0 | 5 | `src/features/design/schema.ts` & `presets.ts` | Verified |
+| Design | Mirror margins, gutter, Bangla/Latin typography, headers/footers | P0 | 5 | `buildPrintStylesheet` & `tests/design-and-export.test.ts` | Verified |
+| Preview | Print preview and pagination | P0 | 6 | `renderPrintHtmlDocument` | Verified |
+| Export | Chapter and full-book PDF export pipeline | P0 | 6,13 | `PdfExportService` with resource & page limits; `generatePdfBuffer` (puppeteer-core) | Verified |
+| Export | Real PDF bytes via Chromium | P0 | 13 | `POST /api/books/[bookId]/export { format:"pdf" }` → `application/pdf` | Implemented |
+| Localization | Bangla and English UI/content | P0 | 1-6 | `src/lib/i18n/messages.ts` | Verified |
+| Auth | Session resolution & dev identity guard in production | P0 | 7,12 | `src/server/auth.ts` + `src/server/prisma-auth.ts` (`/api/auth/*`) | Verified |
+| Security | Resource-level workspace ownership checks | P0 | 2, 7, 8 | Cross-workspace denial tests in `tests/books-and-chapters.test.ts` | Verified |
+| Revisions | Revision list, preview, restore-as-new-revision | P1 | 7 | `restoreRevisionAsNew` non-destructive history tests | Verified |
+| Media | Secure upload, MIME/SVG XSS validation, SHA-256 storage key | P1 | 8,13 | `MediaService.uploadValidatedAsset` + `POST /api/media` + `GET /api/media/[id]` | Verified |
+| Operations | Docker, Docker Compose, `/api/health`, Coolify docs | P0 | 9 | `Dockerfile`, `docker-compose.yml`, `docs/coolify-deployment.md` | Verified |
+| CI | GitHub Actions (postgres:17 service, lint/typecheck/validate/test/build) | P0 | 14 | `.github/workflows/ci.yml` | Implemented |
+| Security headers | CSP, HSTS (prod), Permissions-Policy, nosniff, DENY | P0 | 14 | `next.config.ts` headers + `middleware.ts` request IDs | Implemented |

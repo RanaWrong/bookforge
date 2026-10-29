@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import type { ChapterDetail, ErrorCode } from "../../modules/books/contracts";
+import type { EditorDocument } from "./types";
 import type { Locale } from "../../lib/i18n/messages";
 import { workspaceMessages } from "../../lib/i18n/workspace";
 import { LibraryError } from "../../lib/errors";
@@ -31,8 +32,8 @@ export function ChapterEditor({ bookId, chapter, locale, onState, onSaved }: {
   useEffect(() => {
     const { bookId, chapter } = initial.current;
     const controller = new Autosave(chapter.document, chapter.revision,
-      (document, revision) => saveDocument(bookId, chapter.id, document, revision),
-      (next) => { setState(next); callbacks.current.onState(next); },
+      (doc: EditorDocument, rev: number) => saveDocument(bookId, chapter.id, doc, rev),
+      (next: SaveState) => { setState(next); callbacks.current.onState(next); },
       undefined, 800, () => callbacks.current.onSaved());
     autosave.current = controller;
     return () => controller.dispose();
@@ -66,11 +67,11 @@ export function ChapterEditor({ bookId, chapter, locale, onState, onSaved }: {
         <button className="bf-button" type="button" aria-pressed={mode === "visual"} onClick={() => switchMode("visual")}>{t.visual}</button>
         <button className="bf-button" type="button" aria-pressed={mode === "source"} onClick={() => switchMode("source")}>{t.source}</button>
       </div>
-      <span role="status" aria-live="polite" className="text-sm">{t[state.status]}</span>
+      <span role="status" aria-live="polite" className="text-sm">{(t as Record<string, string>)[state.status]}</span>
     </div>
     <p className="mb-4 text-sm text-[var(--muted)]">{t.help}</p>
-    {warning && <p role="alert" className="mb-4 text-[var(--danger)]">{warning === "UNSUPPORTED_CONTENT" ? t.conversion : errors[warning]}</p>}
-    {state.error && <div role="alert" className="mb-4 text-[var(--danger)]"><p>{state.error === "UNSUPPORTED_CONTENT" ? t.conversion : errors[state.error]}</p>{state.error === "CONFLICT" && <p>{t.recover}</p>}</div>}
+    {warning && <p role="alert" className="mb-4 text-[var(--danger)]">{warning === "UNSUPPORTED_CONTENT" ? t.conversion : (errors as Record<string, string>)[warning]}</p>}
+    {state.error && <div role="alert" className="mb-4 text-[var(--danger)]"><p>{state.error === "UNSUPPORTED_CONTENT" ? t.conversion : (errors as Record<string, string>)[state.error]}</p>{state.error === "CONFLICT" && <p>{t.recover}</p>}</div>}
     {mode === "visual" ? <VisualEditor initialDocument={document} onChange={changed} locale={locale} /> : <SourceEditor initialValue={source} onChange={sourceChanged} label={t.sourceLabel} />}
     <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
       <p className="text-sm text-[var(--muted)]">{state.error ? t.copy : workspaceMessages[locale].limit}</p>

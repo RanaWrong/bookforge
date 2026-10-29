@@ -8,12 +8,18 @@ services:
       POSTGRES_INITDB_ARGS: --encoding=UTF8
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - internal_net
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
       interval: 5s
       timeout: 5s
       retries: 10
       start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 1024M
     restart: unless-stopped
 
   migrate:
@@ -23,6 +29,8 @@ services:
       target: migrate
     environment:
       DATABASE_URL: ${DOCKER_DATABASE_URL:?Set DOCKER_DATABASE_URL using hostname db}
+    networks:
+      - internal_net
     depends_on:
       db:
         condition: service_healthy
@@ -38,13 +46,25 @@ services:
       NODE_ENV: production
       NEXT_PUBLIC_APP_NAME: BookForge
       NEXT_PUBLIC_DEFAULT_LOCALE: bn
+      BOOKFORGE_DEV_IDENTITY: "false"
+      SESSION_SECRET: ${SESSION_SECRET:?Set SESSION_SECRET to at least 32 random hex chars}
       DATABASE_URL: ${DOCKER_DATABASE_URL:?Set DOCKER_DATABASE_URL using hostname db}
+    networks:
+      - internal_net
     depends_on:
       db:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
+    deploy:
+      resources:
+        limits:
+          memory: 1536M
     restart: unless-stopped
+
+networks:
+  internal_net:
+    driver: bridge
 
 volumes:
   postgres_data:

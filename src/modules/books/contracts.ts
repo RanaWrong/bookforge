@@ -1,9 +1,20 @@
-export type ErrorCode = "INVALID_INPUT" | "NOT_FOUND" | "CONFLICT" | "UNSUPPORTED_CONTENT" | "IDENTITY_DISABLED" | "UNAVAILABLE";
+export type ErrorCode =
+  | "INVALID_INPUT"
+  | "NOT_FOUND"
+  | "CONFLICT"
+  | "UNSUPPORTED_CONTENT"
+  | "IDENTITY_DISABLED"
+  | "UNAVAILABLE"
+  | "FORBIDDEN"
+  | "AI_DISABLED"
+  | "AI_PROVIDER_ERROR"
+  | "EXPORT_FORMAT_UNSUPPORTED"
+  | "INVITE_EXPIRED";
 export type Result<T> = { ok: true; data: T } | { ok: false; code: ErrorCode };
 export type BookSummary = { id: string; title: string; chapterCount: number; updatedAt: string };
 export type ChapterSummary = { id: string; title: string; position: number };
 export type BookDetail = { id: string; title: string; chapters: ChapterSummary[] };
-export type ChapterDetail = ChapterSummary & { document: EditorDocument; revision: number };
+export type ChapterDetail = ChapterSummary & { document: EditorDocument; revision: number; text?: string };
 export type Mutation =
   | { kind: "createBook"; title: string; language: "bn" | "en" }
   | { kind: "renameBook"; bookId: string; title: string }

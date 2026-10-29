@@ -7,24 +7,85 @@
   --border: #e6e2dc;
   --muted: #6b6964;
   --accent: #285b4b;
-  --danger: #9d2929;
+  --book-navy: #123b6d;
+  --book-orange: #f26b21;
+  --danger: #9e2a2b;
+
+  /* v2 component tokens */
+  --bf-bg: #f8f7f4;
+  --bf-surface: #ffffff;
+  --bf-border: #e5e3de;
+  --bf-text: #1a1a1a;
+  --bf-muted: #6b7280;
+  --bf-accent: #f26b21;
+  --bf-primary: #123b6d;
 }
 
-* { box-sizing: border-box; }
-html, body { min-height: 100%; }
+/* Dark theme overrides — all pairs verified ≥ 4.5:1 WCAG AA contrast */
+/* #e8e6e1 on #0f1117 ≈ 15:1 · #9ca3af on #0f1117 ≈ 5:1 · others similarly verified */
+[data-theme="dark"] {
+  --background: #0f1117;
+  --foreground: #e8e6e1;
+  --surface: #1a1d24;
+  --border: #2d3142;
+  --muted: #9ca3af;
+  --accent: #4ade80;
+  --book-navy: #4a90d9;
+  --book-orange: #f48c4a;
+  --danger: #f87171;
+
+  /* v2 component tokens — dark */
+  --bf-bg: #0f1117;
+  --bf-surface: #1a1d24;
+  --bf-border: #2d3142;
+  --bf-text: #e8e6e1;
+  --bf-muted: #9ca3af;
+  --bf-accent: #f48c4a;
+  --bf-primary: #4a90d9;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
 body {
   margin: 0;
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, "Noto Sans Bengali", sans-serif;
+  font-family: "Inter", "Noto Sans Bengali", Arial, sans-serif;
 }
-button, select { font: inherit; }
-input, textarea { font: inherit; }
-:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
-.bf-panel { border: 1px solid var(--border); border-radius: 1rem; background: var(--surface); padding: 1.25rem; }
-.bf-button { min-height: 2.5rem; border: 1px solid var(--border); border-radius: .6rem; padding: .45rem .8rem; background: var(--surface); font-size: .875rem; cursor: pointer; }
-.bf-button:hover:not(:disabled) { border-color: var(--accent); }
-.bf-button[aria-pressed="true"], .bf-primary { background: var(--accent); color: white; }
-.bf-danger { background: var(--danger); color: white; }
-button:disabled { cursor: not-allowed; opacity: .55; }
-.bf-input { width: 100%; border: 1px solid var(--border); border-radius: .6rem; padding: .75rem; background: var(--surface); }
+
+button,
+select,
+input,
+textarea {
+  font: inherit;
+}
+
+.manuscript-serif {
+  font-family: "Inter", "Noto Serif Bengali", Georgia, serif;
+}
+
+.manuscript-heading {
+  font-family: "Inter", "Noto Sans Bengali", sans-serif;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: #ffffff;
+  }
+  .print-sheet {
+    box-shadow: none !important;
+    border: none !important;
+    margin: 0 !important;
+    page-break-after: always;
+  }
+}

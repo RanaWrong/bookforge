@@ -1,0 +1,1717 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BookForge — Bilingual Book Writing &amp; Print Publishing Workspace</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=Noto+Sans+Bengali:wght@400;500;600;700&amp;family=Noto+Serif+Bengali:wght@400;600;700&amp;display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --background: #f8f7f4;
+      --foreground: #20201e;
+      --surface: #ffffff;
+      --border: #e6e2dc;
+      --muted: #6b6964;
+      --accent: #285b4b;
+      --book-navy: #123B6D;
+      --book-orange: #F26B21;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: var(--background);
+      color: var(--foreground);
+      font-family: "Inter", "Noto Sans Bengali", sans-serif;
+    }
+    .manuscript-serif {
+      font-family: "Inter", "Noto Serif Bengali", Georgia, serif;
+    }
+    .manuscript-heading {
+      font-family: "Inter", "Noto Sans Bengali", sans-serif;
+    }
+    @media print {
+      .no-print { display: none !important; }
+      body { background: #ffffff; }
+      .print-sheet {
+        box-shadow: none !important;
+        border: none !important;
+        margin: 0 !important;
+        page-break-after: always;
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- Top Navigation Chrome -->
+  <header class="no-print sticky top-0 z-30 border-b border-[#e6e2dc] bg-white/95 backdrop-blur px-4 py-3 sm:px-6">
+    <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <button id="btnBrandHome" type="button" class="text-xl font-bold tracking-tight text-[#20201e] hover:opacity-80">
+          BookForge<span class="text-[#285b4b]">.</span>
+        </button>
+        <span class="hidden sm:inline-block rounded-full bg-[#edf4ef] px-2.5 py-0.5 text-xs font-semibold text-[#285b4b]">
+          v1.0 · Phase 1–10 Complete
+        </span>
+        <span id="activeWorkspaceBadge" class="rounded-full border border-[#e6e2dc] bg-[#f8f7f4] px-2.5 py-0.5 text-xs text-[#6b6964]">
+          Auth: scrypt + HttpOnly Session (मोঃ সোহেল রানা)
+        </span>
+        <span class="hidden md:inline-block rounded-full bg-[#edf4ef] px-2.5 py-0.5 text-[11px] font-semibold text-[#285b4b]">
+          DB: Healthy (1ms) · SSRF Guard: Active
+        </span>
+      </div>
+
+      <!-- Main Navigation Tabs -->
+      <nav class="flex flex-wrap items-center gap-1.5" aria-label="Workspace Navigation">
+        <button id="navDashboard" type="button" class="rounded-lg px-3 py-1.5 text-xs font-semibold transition bg-[#285b4b] text-white">
+          <span data-i18n="navDashboard">ড্যাশবোর্ড</span>
+        </button>
+        <button id="navEditor" type="button" class="rounded-lg px-3 py-1.5 text-xs font-semibold transition bg-[#f8f7f4] text-[#6b6964] hover:text-[#20201e]">
+          <span data-i18n="navEditor">পাণ্ডুলিপি এডিটর</span>
+        </button>
+        <button id="navDesign" type="button" class="rounded-lg px-3 py-1.5 text-xs font-semibold transition bg-[#f8f7f4] text-[#6b6964] hover:text-[#20201e]">
+          <span data-i18n="navDesign">টাইপোগ্রাফি ও প্রিন্ট প্রোফাইল</span>
+        </button>
+        <button id="navPreview" type="button" class="rounded-lg px-3 py-1.5 text-xs font-semibold transition bg-[#f8f7f4] text-[#6b6964] hover:text-[#20201e]">
+          <span data-i18n="navPreview">প্রিন্ট প্রিভিউ ও PDF এক্সপোর্ট</span>
+        </button>
+        <button id="navRevisions" type="button" class="rounded-lg px-3 py-1.5 text-xs font-semibold transition bg-[#f8f7f4] text-[#6b6964] hover:text-[#20201e]">
+          <span data-i18n="navRevisions">রিভিশন ইতিহাস</span>
+        </button>
+      </nav>
+
+      <!-- Locale & Import Actions -->
+      <div class="flex items-center gap-2">
+        <button id="btnOpenImportModal" type="button" class="rounded-lg border border-[#e6e2dc] bg-white px-3 py-1.5 text-xs font-semibold text-[#20201e] hover:bg-[#f8f7f4]">
+          ↑ <span data-i18n="importBtn">Import (.md / .docx / .zip)</span>
+        </button>
+        <div class="flex items-center rounded-full border border-[#e6e2dc] bg-[#f8f7f4] p-0.5 text-xs">
+          <button id="btnLangBn" type="button" class="rounded-full px-2.5 py-1 font-semibold bg-[#285b4b] text-white">
+            বাংলা
+          </button>
+          <button id="btnLangEn" type="button" class="rounded-full px-2.5 py-1 font-semibold text-[#6b6964]">
+            English
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Toast Notification Bar -->
+  <div id="toastBanner" class="no-print hidden fixed bottom-5 right-5 z-50 max-w-md rounded-xl border border-[#285b4b] bg-[#20201e] px-4 py-3 text-xs font-medium text-white shadow-lg">
+    <span id="toastMessage">Action completed.</span>
+  </div>
+
+  <!-- Main Workspace Container -->
+  <main class="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6">
+
+    <!-- VIEW 1: DASHBOARD & BOOK MANAGEMENT -->
+    <section id="viewDashboard" class="space-y-8">
+      <div class="grid gap-8 rounded-3xl border border-[#e6e2dc] bg-white p-6 shadow-sm lg:grid-cols-[1.15fr_0.85fr] lg:items-center sm:p-8">
+        <div>
+          <p id="heroEyebrow" class="mb-3 text-xs font-bold uppercase tracking-[0.16em] text-[#285b4b]">
+            আপনার বই লেখার ওয়ার্কস্পেস
+          </p>
+          <h1 id="heroTitle" class="text-3xl font-bold tracking-tight text-[#20201e] sm:text-5xl leading-tight">
+            লিখুন। সাজান। প্রকাশ করুন।
+          </h1>
+          <p id="heroDesc" class="mt-4 max-w-xl text-sm sm:text-base leading-relaxed text-[#6b6964]">
+            বাংলা ও English মেশানো বইয়ের নিখুঁত গঠন, দ্রুত ফ্রন্টম্যাটার, 215 × 275 মিমি মিরর মার্জিন প্রিন্ট প্রোফাইল এবং সহজতম পাবলিশিং অভিজ্ঞতা নিয়ে একটি ডেডিকেটেড workspace.
+          </p>
+          <div class="mt-6 flex flex-wrap gap-3">
+            <button id="btnOpenCreateBookModal" type="button" class="rounded-xl bg-[#285b4b] px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:opacity-95">
+              + <span data-i18n="createBook">নতুন বই তৈরি করুন</span>
+            </button>
+            <button id="btnHeroImport" type="button" class="rounded-xl border border-[#e6e2dc] bg-white px-5 py-2.5 text-sm font-semibold text-[#20201e] hover:bg-[#f8f7f4]">
+              ↑ <span data-i18n="importBook">বই Import করুন</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="rounded-2xl border border-[#e6e2dc] bg-[#f8f7f4] p-5">
+          <div class="flex items-center justify-between border-b border-[#e6e2dc] pb-3">
+            <div>
+              <p class="text-[11px] font-semibold uppercase tracking-widest text-[#6b6964]">BookForge Architecture</p>
+              <h2 id="heroCardTitle" class="mt-0.5 text-base font-bold text-[#123B6D]">একক বই, অনন্য স্ট্রাকচারের নিশ্চয়তা</h2>
+            </div>
+            <span class="rounded-full bg-[#edf4ef] px-2.5 py-0.5 text-xs font-semibold text-[#285b4b]">Verified</span>
+          </div>
+          <div class="mt-4 space-y-2.5 text-xs">
+            <div class="flex items-center gap-3 rounded-xl bg-white p-3 border border-[#e6e2dc]">
+              <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#edf4ef] font-bold text-[#285b4b]">01</span>
+              <div>
+                <div class="font-bold text-[#20201e]" data-i18n="pillar1Title">অধ্যায় ও কাঠামো</div>
+                <div class="text-[#6b6964]" data-i18n="pillar1Desc">প্রাককথন · মূল অধ্যায় · পরিশিষ্ট এবং ট্রানজ্যাকশনাল ক্রমবিন্যাস</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-3 rounded-xl bg-white p-3 border border-[#e6e2dc]">
+              <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#FFF4ED] font-bold text-[#F26B21]">02</span>
+              <div>
+                <div class="font-bold text-[#20201e]" data-i18n="pillar2Title">ডুয়াল-মোড এডিটর ও রিভিশন</div>
+                <div class="text-[#6b6964]" data-i18n="pillar2Desc">ভিজ্যুয়াল TipTap + মার্কডাউন সোর্স, অটোসেভ এবং সংস্করণ পুনরুদ্ধার</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-3 rounded-xl bg-white p-3 border border-[#e6e2dc]">
+              <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-[#F4F7FB] font-bold text-[#123B6D]">03</span>
+              <div>
+                <div class="font-bold text-[#20201e]" data-i18n="pillar3Title">প্রিন্ট প্রোফাইল ও PDF ইঞ্জিন</div>
+                <div class="text-[#6b6964]" data-i18n="pillar3Desc">215 × 275 মিমি মিরর মার্জিন, বাঁধাই গটার ও প্রিন্ট-রেডি PDF এক্সপোর্ট</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Books Grid -->
+      <div>
+        <div class="mb-4 flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h2 class="text-xl font-bold text-[#20201e]" data-i18n="booksHeading">আপনার পাণ্ডুলিপি ও বইসমূহ</h2>
+            <p class="text-xs text-[#6b6964]" data-i18n="booksSubheading">ওয়ার্কস্পেসের সকল বই, অধ্যায় এবং মুদ্রণ প্রোফাইল এখান থেকে পরিচালনা করুন।</p>
+          </div>
+          <div id="dashboardStatsSummary" class="text-xs font-semibold text-[#285b4b]"></div>
+        </div>
+        <div id="booksGridContainer" class="grid gap-5 md:grid-cols-2"></div>
+      </div>
+    </section>
+
+    <!-- VIEW 2: DUAL-MODE MANUSCRIPT EDITOR -->
+    <section id="viewEditor" class="hidden">
+      <div class="grid gap-6 lg:grid-cols-[290px_1fr]">
+        <!-- Chapter Hierarchy Sidebar -->
+        <aside class="rounded-2xl border border-[#e6e2dc] bg-white p-4 shadow-sm h-fit space-y-4">
+          <div class="border-b border-[#e6e2dc] pb-3">
+            <label for="selectActiveBook" class="block text-[11px] font-bold uppercase tracking-wider text-[#6b6964] mb-1">
+              Active Book Project
+            </label>
+            <select id="selectActiveBook" class="w-full rounded-lg border border-[#e6e2dc] bg-[#f8f7f4] px-2.5 py-1.5 text-xs font-semibold text-[#123B6D]"></select>
+          </div>
+
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-[#6b6964]" data-i18n="chaptersHeader">অধ্যায় তালিকা</h3>
+            <button id="btnOpenAddChapterModal" type="button" class="rounded-lg bg-[#285b4b] px-2.5 py-1 text-xs font-semibold text-white hover:opacity-95">
+              + <span data-i18n="addChapterBtn">নতুন অধ্যায়</span>
+            </button>
+          </div>
+
+          <div id="chapterListContainer" class="space-y-2 max-h-[460px] overflow-y-auto pr-1"></div>
+
+          <div class="border-t border-[#e6e2dc] pt-3 text-[11px] text-[#6b6964] space-y-1">
+            <div id="sidebarBookMetrics" class="font-semibold text-[#20201e]"></div>
+            <div>Schema v1 · Canonical Block Sync Active</div>
+          </div>
+        </aside>
+
+        <!-- Center Editor & Live Block Inspector -->
+        <div class="flex flex-col rounded-2xl border border-[#e6e2dc] bg-white shadow-sm overflow-hidden">
+          <!-- Editor Toolbar -->
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-[#e6e2dc] bg-[#f8f7f4] px-4 py-2.5">
+            <div class="flex items-center gap-1.5">
+              <button id="btnModeVisual" type="button" class="rounded-lg px-3 py-1.5 text-xs font-semibold bg-[#285b4b] text-white">
+                Visual (TipTap)
+              </button>
+              <button id="btnModeSource" type="button" class="rounded-lg px-3 py-1.5 text-xs font-semibold bg-white text-[#6b6964] border border-[#e6e2dc]">
+                Markdown (CodeMirror)
+              </button>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-1.5 text-xs">
+              <button id="btnInsertH2" type="button" class="rounded-lg border border-[#e6e2dc] bg-white px-2.5 py-1 font-medium hover:bg-[#edf4ef]">
+                H2 প্রশ্ন/বিভাগ
+              </button>
+              <button id="btnInsertTip" type="button" class="rounded-lg border border-[#F26B21]/40 bg-[#FFF4ED] px-2.5 py-1 font-semibold text-[#F26B21] hover:opacity-90">
+                + 💡 এক্সাম টিপস
+              </button>
+              <button id="btnInsertQuote" type="button" class="rounded-lg border border-[#123B6D]/30 bg-[#F4F7FB] px-2.5 py-1 font-semibold text-[#123B6D] hover:opacity-90">
+                + ❝ উদ্ধৃতি / কবিতাংশ
+              </button>
+              <button id="btnInsertMistake" type="button" class="rounded-lg border border-[#9E2A2B]/30 bg-[#fff5f5] px-2.5 py-1 font-semibold text-[#9E2A2B] hover:opacity-90">
+                + ⚠️ সাধারণ ভুল
+              </button>
+              <button id="btnInsertTable" type="button" class="rounded-lg border border-[#e6e2dc] bg-white px-2.5 py-1 font-medium hover:bg-[#edf4ef]">
+                + ⊞ তুলনামূলক ছক
+              </button>
+              <button id="btnInsertNoteSpace" type="button" class="rounded-lg border border-[#e6e2dc] bg-white px-2.5 py-1 font-medium hover:bg-[#edf4ef]">
+                + ✎ নোট এরিয়া
+              </button>
+            </div>
+
+            <div class="flex items-center gap-2 text-xs">
+              <span id="autosaveBadge" class="rounded-full bg-[#edf4ef] px-2.5 py-1 font-semibold text-[#285b4b]">
+                v1 · সংরক্ষিত
+              </span>
+            </div>
+          </div>
+
+          <!-- Chapter Metadata Header -->
+          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-[#e6e2dc] px-5 py-3">
+            <div class="flex-1 min-w-[220px]">
+              <input id="inputChapterTitle" type="text" aria-label="Chapter Title" class="w-full text-lg sm:text-xl font-bold text-[#123B6D] focus:outline-none" value="" />
+            </div>
+            <div class="flex items-center gap-2">
+              <select id="selectChapterKind" aria-label="Chapter Kind" class="rounded-lg border border-[#e6e2dc] bg-[#f8f7f4] px-2.5 py-1 text-xs font-semibold text-[#20201e]">
+                <option value="FRONTMATTER">FRONTMATTER (প্রাককথন)</option>
+                <option value="CHAPTER">CHAPTER (মূল অধ্যায়)</option>
+                <option value="BACKMATTER">BACKMATTER (পরিশিষ্ট)</option>
+              </select>
+              <span id="chapterWordCounter" class="text-xs font-medium text-[#6b6964]">0 words</span>
+            </div>
+          </div>
+
+          <!-- Warning Banner for Unsupported / Raw Blocks -->
+          <div id="editorWarningsBox" class="hidden bg-[#FFF4ED] border-b border-[#F26B21]/30 px-5 py-2 text-xs text-[#9E2A2B]"></div>
+
+          <!-- Split / Mode Panes -->
+          <div id="editorPanesWrapper" class="grid gap-0 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-[#e6e2dc]">
+            <!-- Markdown / Editable Source Pane -->
+            <div id="paneSourceEditor" class="p-5 flex flex-col">
+              <div class="mb-2 flex items-center justify-between">
+                <span class="text-[11px] font-bold uppercase tracking-wider text-[#6b6964]">
+                  Markdown / Canonical Source
+                </span>
+                <span class="text-[11px] text-[#6b6964]">UTF-8 · বাংলা ও English</span>
+              </div>
+              <textarea id="textareaMarkdown" rows="18" aria-label="Manuscript Markdown Content" class="w-full flex-1 rounded-xl border border-[#e6e2dc] bg-[#fcfbf9] p-4 font-mono text-sm leading-relaxed text-[#20201e] focus:border-[#285b4b] focus:outline-none"></textarea>
+            </div>
+
+            <!-- Live Styled Visual Book Canvas -->
+            <div id="paneVisualPreview" class="p-5 bg-white flex flex-col">
+              <div class="mb-2 flex items-center justify-between">
+                <span class="text-[11px] font-bold uppercase tracking-wider text-[#6b6964]">
+                  Live Book Style Canvas (STYLE.md Rules)
+                </span>
+                <span id="activeProfileBadgeInEditor" class="text-[11px] font-semibold text-[#123B6D]">
+                  215 × 275 mm · Mirror Margins
+                </span>
+              </div>
+              <div id="visualCanvasRender" class="manuscript-serif flex-1 rounded-xl border border-[#e6e2dc] bg-[#fcfbf9] p-5 overflow-y-auto max-h-[460px] space-y-3 text-sm leading-relaxed"></div>
+            </div>
+          </div>
+
+          <!-- Revision Snapshot Footer Bar -->
+          <div class="flex flex-wrap items-center justify-between gap-3 border-t border-[#e6e2dc] bg-[#f8f7f4] px-5 py-3">
+            <div class="flex flex-wrap items-center gap-2">
+              <input id="inputRevisionNote" type="text" placeholder="রিভিশন নোট লিখুন (যেমন: দাপ্তরিক পত্র সংযোজন)..." class="w-64 rounded-lg border border-[#e6e2dc] bg-white px-3 py-1.5 text-xs" />
+              <button id="btnSaveRevisionSnapshot" type="button" class="rounded-lg bg-[#285b4b] px-3.5 py-1.5 text-xs font-semibold text-white hover:opacity-95">
+                + <span data-i18n="saveSnapshotBtn">রিভিশন স্ন্যাপশট সংরক্ষণ</span>
+              </button>
+            </div>
+            <div class="flex items-center gap-2">
+              <button id="btnSimulateConflict" type="button" class="rounded-lg border border-[#e6e2dc] bg-white px-3 py-1.5 text-xs font-medium text-[#6b6964] hover:text-[#20201e]">
+                Test Conflict Guard
+              </button>
+              <button id="btnJumpToPrintPreview" type="button" class="rounded-lg bg-[#123B6D] px-3.5 py-1.5 text-xs font-semibold text-white hover:opacity-95">
+                প্রিন্ট প্রিভিউ দেখুন →
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 3: DESIGN SYSTEM & PRINT PROFILES -->
+    <section id="viewDesign" class="hidden space-y-6">
+      <div class="rounded-2xl border border-[#e6e2dc] bg-white p-6 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-4 border-b border-[#e6e2dc] pb-4">
+          <div>
+            <h2 class="text-xl font-bold text-[#123B6D]" data-i18n="designHeading">মুদ্রণ ও টাইপোগ্রাফি প্রোফাইল (Design System)</h2>
+            <p class="text-xs text-[#6b6964]">
+              পাণ্ডুলিপির মূল টেক্সট অপরিবর্তিত রেখে পৃষ্ঠার আকার, মিরর মার্জিন, গটার এবং বাংলা/ইংরেজি ফন্ট নিয়ন্ত্রণ করুন।
+            </p>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button id="btnPresetMaster" type="button" class="rounded-lg bg-[#123B6D] px-3 py-1.5 text-xs font-semibold text-white">
+              Master Book (215 × 275 mm)
+            </button>
+            <button id="btnPresetTrade" type="button" class="rounded-lg border border-[#e6e2dc] bg-[#f8f7f4] px-3 py-1.5 text-xs font-semibold text-[#20201e]">
+              Trade Paperback (152 × 229 mm)
+            </button>
+            <button id="btnPresetA5" type="button" class="rounded-lg border border-[#e6e2dc] bg-[#f8f7f4] px-3 py-1.5 text-xs font-semibold text-[#20201e]">
+              Academic A5 (148 × 210 mm)
+            </button>
+          </div>
+        </div>
+
+        <div class="mt-6 grid gap-6 md:grid-cols-3">
+          <!-- Column 1: Page Geometry & Mirror Margins -->
+          <div class="space-y-4 rounded-xl border border-[#e6e2dc] bg-[#f8f7f4] p-4">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-[#123B6D]">
+              1. Page Geometry &amp; Mirror Margins
+            </h3>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label for="inputWidthMm" class="block text-xs font-semibold mb-1">Width (mm)</label>
+                <input id="inputWidthMm" type="number" min="100" max="350" value="215" class="w-full rounded-lg border border-[#e6e2dc] bg-white px-3 py-1.5 text-sm" />
+              </div>
+              <div>
+                <label for="inputHeightMm" class="block text-xs font-semibold mb-1">Height (mm)</label>
+                <input id="inputHeightMm" type="number" min="140" max="450" value="275" class="w-full rounded-lg border border-[#e6e2dc] bg-white px-3 py-1.5 text-sm" />
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label for="inputMarginTop" class="block text-xs font-semibold mb-1">Top Margin (mm)</label>
+                <input id="inputMarginTop" type="number" min="8" max="50" value="18" class="w-full rounded-lg border border-[#e6e2dc] bg-white px-3 py-1.5 text-sm" />
+              </div>
+              <div>
+                <label for="inputMarginBottom" class="block text-xs font-semibold mb-1">Bottom Margin (mm)</label>
+                <input id="inputMarginBottom" type="number" min="8" max="50" value="20" class="w-full rounded-lg border border-[#e6e2dc] bg-white px-3 py-1.5 text-sm" />
+              </div>
+            </div>
+            <div class="grid grid-cols-3 gap-2">
+              <div>
+                <label for="inputMarginInside" class="block text-xs font-semibold mb-1">Inside (mm)</label>
+                <input id="inputMarginInside" type="number" min="8" max="50" value="22" class="w-full rounded-lg border border-[#e6e2dc] bg-white px-2.5 py-1.5 text-sm" />
+              </div>
+              <div>
+                <label for="inputMarginOutside" class="block text-xs font-semibold mb-1">Outside (mm)</label>
+                <input id="inputMarginOutside" type="number" min="8" max="50" value="16" class="w-full rounded-lg border border-[#e6e2dc] bg-white px-2.5 py-1.5 text-sm" />
+              </div>
+              <div>
+                <label for="inputGutter" class="block text-xs font-semibold mb-1">Gutter (mm)</label>
+                <input id="inputGutter" type="number" min="0" max="20" value="5" class="w-full rounded-lg border border-[#e6e2dc] bg-white px-2.5 py-1.5 text-sm" />
+              </div>
+            </div>
+            <label class="flex items-center gap-2 text-xs font-semibold text-[#20201e] pt-1">
+              <input id="checkMirrorMargins" type="checkbox" checked class="rounded" />
+              Enable Mirror Margins (Left/Right Binding Gutter)
+            </label>
+          </div>
+
+          <!-- Column 2: Bilingual Typography -->
+          <div class="space-y-4 rounded-xl border border-[#e6e2dc] bg-[#f8f7f4] p-4">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-[#123B6D]">
+              2. Bilingual Typography (Bangla + Latin)
+            </h3>
+            <div>
+              <label for="selectBanglaBodyFont" class="block text-xs font-semibold mb-1">Bangla Body Font</label>
+              <select id="selectBanglaBodyFont" class="w-full rounded-lg border border-[#e6e2dc] bg-white px-3 py-1.5 text-sm">
+                <option value="Noto Serif Bengali">Noto Serif Bengali (Print Standard)</option>
+                <option value="Noto Sans Bengali">Noto Sans Bengali</option>
+                <option value="SolaimanLipi">SolaimanLipi</option>
+                <option value="Kalpurush">Kalpurush</option>
+              </select>
+            </div>
+            <div>
+              <label for="selectBanglaHeadingFont" class="block text-xs font-semibold mb-1">Bangla Heading / UI Font</label>
+              <select id="selectBanglaHeadingFont" class="w-full rounded-lg border border-[#e6e2dc] bg-white px-3 py-1.5 text-sm">
+                <option value="Noto Sans Bengali">Noto Sans Bengali</option>
+                <option value="Noto Serif Bengali">Noto Serif Bengali</option>
+              </select>
+            </div>
+            <div>
+              <label for="selectLatinFont" class="block text-xs font-semibold mb-1">English / Latin Font</label>
+              <select id="selectLatinFont" class="w-full rounded-lg border border-[#e6e2dc] bg-white px-3 py-1.5 text-sm">
+                <option value="Inter">Inter (Master Style Standard)</option>
+                <option value="Georgia">Georgia</option>
+                <option value="Merriweather">Merriweather</option>
+              </select>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label for="inputFontSizePt" class="block text-xs font-semibold mb-1">Body Size (pt)</label>
+                <input id="inputFontSizePt" type="number" step="0.5" min="9" max="16" value="11" class="w-full rounded-lg border border-[#e6e2dc] bg-white px-3 py-1.5 text-sm" />
+              </div>
+              <div>
+                <label for="inputLineHeight" class="block text-xs font-semibold mb-1">Line Height</label>
+                <input id="inputLineHeight" type="number" step="0.05" min="1.2" max="2.2" value="1.5" class="w-full rounded-lg border border-[#e6e2dc] bg-white px-3 py-1.5 text-sm" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Column 3: Colors, Running Headers & Watermark -->
+          <div class="space-y-4 rounded-xl border border-[#e6e2dc] bg-[#f8f7f4] p-4">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-[#123B6D]">
+              3. Color System, Headers &amp; Print Rules
+            </h3>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label for="inputPrimaryColor" class="block text-xs font-semibold mb-1">Primary Navy</label>
+                <input id="inputPrimaryColor" type="color" value="#123B6D" class="h-9 w-full rounded-lg border border-[#e6e2dc] bg-white p-1" />
+              </div>
+              <div>
+                <label for="inputAccentColor" class="block text-xs font-semibold mb-1">Accent Orange</label>
+                <input id="inputAccentColor" type="color" value="#F26B21" class="h-9 w-full rounded-lg border border-[#e6e2dc] bg-white p-1" />
+              </div>
+            </div>
+            <div>
+              <label for="inputWatermark" class="block text-xs font-semibold mb-1">Print Watermark (Optional)</label>
+              <input id="inputWatermark" type="text" placeholder="যেমন: লেখক কর্তৃক সর্বস্বত্ব সংরক্ষিত" class="w-full rounded-lg border border-[#e6e2dc] bg-white px-3 py-1.5 text-sm" />
+            </div>
+            <label class="flex items-center gap-2 text-xs font-semibold text-[#20201e]">
+              <input id="checkChapterNewPage" type="checkbox" checked class="rounded" />
+              Start Every Major Chapter on a New Page
+            </label>
+            <button id="btnSaveDesignProfile" type="button" class="w-full rounded-xl bg-[#285b4b] py-2.5 text-xs font-semibold text-white shadow-sm hover:opacity-95">
+              Save &amp; Apply Versioned Design Profile
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 4: PRINT PREVIEW & PDF EXPORT -->
+    <section id="viewPreview" class="hidden space-y-6">
+      <div class="no-print flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-[#e6e2dc] bg-white p-5 shadow-sm">
+        <div>
+          <h2 class="text-lg font-bold text-[#123B6D]" data-i18n="previewHeading">প্রিন্ট প্রিভিউ ও PDF এক্সপোর্ট ইঞ্জিন</h2>
+          <p id="previewGeometrySummary" class="text-xs text-[#6b6964]">
+            Trim: 215mm × 275mm · Mirror Margins (Inside 22mm + 5mm Gutter = 27mm, Outside 16mm)
+          </p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+          <select id="selectExportScope" aria-label="Export Scope" class="rounded-lg border border-[#e6e2dc] bg-[#f8f7f4] px-3 py-2 text-xs font-semibold">
+            <option value="BOOK">সম্পূর্ণ বই (Full Book Export)</option>
+            <option value="CHAPTER">শুধুমাত্র বর্তমান অধ্যায় (Current Chapter Only)</option>
+          </select>
+          <button id="btnDownloadPrintHtml" type="button" class="rounded-xl border border-[#e6e2dc] bg-white px-4 py-2 text-xs font-semibold text-[#20201e] hover:bg-[#f8f7f4]">
+            ↓ Download Typeset HTML
+          </button>
+          <button id="btnTriggerPrintPdf" type="button" class="rounded-xl bg-[#123B6D] px-4 py-2 text-xs font-semibold text-white shadow-sm hover:opacity-95">
+            ⎙ Print / Save as PDF
+          </button>
+        </div>
+      </div>
+
+      <!-- Paginated Mirror-Margin Sheet Container -->
+      <div id="printPagesContainer" class="space-y-8"></div>
+    </section>
+
+    <!-- VIEW 5: REVISION HISTORY & RESTORE -->
+    <section id="viewRevisions" class="hidden space-y-6">
+      <div class="rounded-2xl border border-[#e6e2dc] bg-white p-6 shadow-sm">
+        <div class="flex flex-wrap items-center justify-between gap-4 border-b border-[#e6e2dc] pb-4">
+          <div>
+            <h2 class="text-lg font-bold text-[#123B6D]" data-i18n="revisionsHeading">সংস্করণ ইতিহাস ও পুনরুদ্ধার (Revision History)</h2>
+            <p class="text-xs text-[#6b6964]">
+              পুরাতন সংস্করণ পুনরুদ্ধার করলে আগের ইতিহাস মুছে না গিয়ে একটি নতুন রিভিশন হিসেবে সংরক্ষিত হয় (Non-destructive restore).
+            </p>
+          </div>
+          <span id="revisionChapterLabel" class="rounded-full bg-[#edf4ef] px-3 py-1 text-xs font-semibold text-[#285b4b]"></span>
+        </div>
+        <div id="revisionsListContainer" class="mt-4 space-y-3"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL 1: CREATE NEW BOOK -->
+  <div id="modalCreateBook" class="no-print hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <form id="formCreateBook" class="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl space-y-4">
+      <div class="flex items-center justify-between border-b border-[#e6e2dc] pb-3">
+        <h3 class="text-lg font-bold text-[#123B6D]">নতুন বই তৈরি করুন (Create Book)</h3>
+        <button id="btnCloseCreateBookModal" type="button" class="text-xs font-bold text-[#6b6964]">✕</button>
+      </div>
+      <div>
+        <label for="inputBookTitle" class="block text-xs font-semibold mb-1">বইয়ের শিরোনাম (Title) *</label>
+        <input id="inputBookTitle" type="text" required placeholder="যেমন: পিএসসি লিখিত পরীক্ষা সহায়িকা" class="w-full rounded-lg border border-[#e6e2dc] px-3 py-2 text-sm" />
+      </div>
+      <div>
+        <label for="inputBookSubtitle" class="block text-xs font-semibold mb-1">উপশিরোনাম (Subtitle)</label>
+        <input id="inputBookSubtitle" type="text" placeholder="নন-ক্যাডার ও নন-ডিপার্টমেন্টাল অংশ" class="w-full rounded-lg border border-[#e6e2dc] px-3 py-2 text-sm" />
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label for="inputBookAuthor" class="block text-xs font-semibold mb-1">লেখক / সম্পাদক (Author) *</label>
+          <input id="inputBookAuthor" type="text" required value="মোঃ সোহেল রানা" class="w-full rounded-lg border border-[#e6e2dc] px-3 py-2 text-sm" />
+        </div>
+        <div>
+          <label for="selectBookLanguage" class="block text-xs font-semibold mb-1">প্রধান ভাষা (Language)</label>
+          <select id="selectBookLanguage" class="w-full rounded-lg border border-[#e6e2dc] px-3 py-2 text-sm">
+            <option value="bn">বাংলা + English (Bilingual)</option>
+            <option value="en">English + বাংলা</option>
+          </select>
+        </div>
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button id="btnCancelCreateBook" type="button" class="rounded-lg border border-[#e6e2dc] px-4 py-2 text-xs font-semibold">Cancel</button>
+        <button type="submit" class="rounded-lg bg-[#285b4b] px-4 py-2 text-xs font-semibold text-white">বই সংরক্ষণ করুন</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- MODAL 2: ADD CHAPTER -->
+  <div id="modalAddChapter" class="no-print hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <form id="formAddChapter" class="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl space-y-4">
+      <div class="flex items-center justify-between border-b border-[#e6e2dc] pb-3">
+        <h3 class="text-lg font-bold text-[#123B6D]">নতুন অধ্যায় যোগ করুন (Add Chapter)</h3>
+        <button id="btnCloseAddChapterModal" type="button" class="text-xs font-bold text-[#6b6964]">✕</button>
+      </div>
+      <div>
+        <label for="inputNewChapterTitle" class="block text-xs font-semibold mb-1">অধ্যায়ের শিরোনাম *</label>
+        <input id="inputNewChapterTitle" type="text" required placeholder="যেমন: অধ্যায় ০২: ইংরেজি গ্রামার ও রাইটিং" class="w-full rounded-lg border border-[#e6e2dc] px-3 py-2 text-sm" />
+      </div>
+      <div>
+        <label for="selectNewChapterKind" class="block text-xs font-semibold mb-1">অধ্যায়ের ধরন (Section Type)</label>
+        <select id="selectNewChapterKind" class="w-full rounded-lg border border-[#e6e2dc] px-3 py-2 text-sm">
+          <option value="FRONTMATTER">FRONTMATTER (প্রাককথন / সূচিপত্র)</option>
+          <option value="CHAPTER" selected>CHAPTER (মূল অধ্যায়)</option>
+          <option value="BACKMATTER">BACKMATTER (পরিশিষ্ট / মডেল টেস্ট)</option>
+        </select>
+      </div>
+      <div class="flex justify-end gap-2 pt-2">
+        <button id="btnCancelAddChapter" type="button" class="rounded-lg border border-[#e6e2dc] px-4 py-2 text-xs font-semibold">Cancel</button>
+        <button type="submit" class="rounded-lg bg-[#285b4b] px-4 py-2 text-xs font-semibold text-white">যোগ করুন</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- MODAL 3: SECURE IMPORT PIPELINE (MARKDOWN, DOCX, ZIP) -->
+  <div id="modalImport" class="no-print hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div class="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-xl space-y-4 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-[#e6e2dc] pb-3">
+        <div>
+          <h3 class="text-lg font-bold text-[#123B6D]">পাণ্ডুলিপি Import ও ভ্যালিডেশন পাইপলাইন</h3>
+          <p class="text-xs text-[#6b6964]">Markdown (.md), Word (.docx) এবং ZIP আর্কাইভ পাথ-ট্রাভার্সাল ও মান যাচাইকরণ।</p>
+        </div>
+        <button id="btnCloseImportModal" type="button" class="text-xs font-bold text-[#6b6964]">✕</button>
+      </div>
+
+      <!-- Preset Fixture Buttons for Quick Testing -->
+      <div class="flex flex-wrap gap-2 text-xs">
+        <button id="btnFixtureCleanMd" type="button" class="rounded-lg border border-[#285b4b] bg-[#edf4ef] px-3 py-1.5 font-semibold text-[#285b4b]">
+          Load Clean Bilingual Markdown
+        </button>
+        <button id="btnFixtureDocxWarnings" type="button" class="rounded-lg border border-[#F26B21] bg-[#FFF4ED] px-3 py-1.5 font-semibold text-[#F26B21]">
+          Load DOCX + OCR/LaTeX Warnings Fixture
+        </button>
+        <button id="btnFixtureZipAttack" type="button" class="rounded-lg border border-[#9E2A2B] bg-[#fff5f5] px-3 py-1.5 font-semibold text-[#9E2A2B]">
+          Test Malicious ZIP Path-Traversal Guard
+        </button>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label for="selectImportFormat" class="block text-xs font-semibold mb-1">Source Format</label>
+          <select id="selectImportFormat" class="w-full rounded-lg border border-[#e6e2dc] px-3 py-1.5 text-xs font-semibold">
+            <option value="MARKDOWN">Markdown (.md)</option>
+            <option value="DOCX">Microsoft Word (.docx structured XML)</option>
+            <option value="ZIP">ZIP Manuscript Archive (.zip)</option>
+          </select>
+        </div>
+        <div>
+          <label for="inputImportFilename" class="block text-xs font-semibold mb-1">Filename / Archive Entry Path</label>
+          <input id="inputImportFilename" type="text" value="psc_written_chapters.md" class="w-full rounded-lg border border-[#e6e2dc] px-3 py-1.5 text-xs font-mono" />
+        </div>
+      </div>
+
+      <div>
+        <label for="textareaImportPayload" class="block text-xs font-semibold mb-1">Manuscript Payload to Validate &amp; Preview</label>
+        <textarea id="textareaImportPayload" rows="7" class="w-full rounded-xl border border-[#e6e2dc] bg-[#fcfbf9] p-3 font-mono text-xs"></textarea>
+      </div>
+
+      <div id="importValidationReportBox" class="rounded-xl border border-[#e6e2dc] bg-[#f8f7f4] p-4 text-xs space-y-2">
+        <div class="font-bold text-[#123B6D]">প্রস্তুত: ভ্যালিডেশন রিপোর্ট দেখতে "Validate &amp; Preview" ক্লিক করুন।</div>
+      </div>
+
+      <div class="flex justify-end gap-2 pt-2">
+        <button id="btnValidateImport" type="button" class="rounded-lg border border-[#123B6D] px-4 py-2 text-xs font-semibold text-[#123B6D]">
+          1. Validate &amp; Preview Report
+        </button>
+        <button id="btnConfirmImport" type="button" class="rounded-lg bg-[#285b4b] px-4 py-2 text-xs font-semibold text-white">
+          2. Confirm &amp; Import into Active Book
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="no-print mt-auto border-t border-[#e6e2dc] bg-white py-4 px-6 text-xs text-[#6b6964]">
+    <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2">
+      <span>BookForge · Bilingual (বাংলা + English) Book Authoring &amp; Print Typesetting Engine</span>
+      <span>215 × 275 mm Master Book Style · Workspace Isolation Enabled</span>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      const I18N = {
+        bn: {
+          navDashboard: "ড্যাশবোর্ড",
+          navEditor: "পাণ্ডুলিপি এডিটর",
+          navDesign: "টাইপোগ্রাফি ও প্রিন্ট প্রোফাইল",
+          navPreview: "প্রিন্ট প্রিভিউ ও PDF এক্সপোর্ট",
+          navRevisions: "রিভিশন ইতিহাস",
+          importBtn: "Import (.md / .docx / .zip)",
+          createBook: "নতুন বই তৈরি করুন",
+          importBook: "বই Import করুন",
+          pillar1Title: "অধ্যায় ও কাঠামো",
+          pillar1Desc: "প্রাককথন · মূল অধ্যায় · পরিশিষ্ট এবং ট্রানজ্যাকশনাল ক্রমবিন্যাস",
+          pillar2Title: "ডুয়াল-মোড এডিটর ও রিভিশন",
+          pillar2Desc: "ভিজ্যুয়াল TipTap + মার্কডাউন সোর্স, অটোসেভ এবং সংস্করণ পুনরুদ্ধার",
+          pillar3Title: "প্রিন্ট প্রোফাইল ও PDF ইঞ্জিন",
+          pillar3Desc: "215 × 275 মিমি মিরর মার্জিন, বাঁধাই গটার ও প্রিন্ট-রেডি PDF এক্সপোর্ট",
+          booksHeading: "আপনার পাণ্ডুলিপি ও বইসমূহ",
+          booksSubheading: "ওয়ার্কস্পেসের সকল বই, অধ্যায় এবং মুদ্রণ প্রোফাইল এখান থেকে পরিচালনা করুন।",
+          chaptersHeader: "অধ্যায় তালিকা",
+          addChapterBtn: "নতুন অধ্যায়",
+          saveSnapshotBtn: "রিভিশন স্ন্যাপশট সংরক্ষণ",
+          designHeading: "মুদ্রণ ও টাইপোগ্রাফি প্রোফাইল (Design System)",
+          previewHeading: "প্রিন্ট প্রিভিউ ও PDF এক্সপোর্ট ইঞ্জিন",
+          revisionsHeading: "সংস্করণ ইতিহাস ও পুনরুদ্ধার (Revision History)",
+          heroEyebrow: "আপনার বই লেখার ওয়ার্কস্পেস",
+          heroTitle: "লিখুন। সাজান। প্রকাশ করুন।",
+          heroDesc: "বাংলা ও English মেশানো বইয়ের নিখুঁত গঠন, দ্রুত ফ্রন্টম্যাটার, 215 × 275 মিমি মিরর মার্জিন প্রিন্ট প্রোফাইল এবং সহজতম পাবলিশিং অভিজ্ঞতা নিয়ে একটি ডেডিকেটেড workspace."
+        },
+        en: {
+          navDashboard: "Dashboard",
+          navEditor: "Manuscript Editor",
+          navDesign: "Typography & Print Profile",
+          navPreview: "Print Preview & PDF Export",
+          navRevisions: "Revision History",
+          importBtn: "Import (.md / .docx / .zip)",
+          createBook: "Create a Book",
+          importBook: "Import Manuscript",
+          pillar1Title: "Chapters & Structure",
+          pillar1Desc: "Frontmatter · Chapters · Appendix with transactional reordering",
+          pillar2Title: "Dual-Mode Editor & Revisions",
+          pillar2Desc: "Visual TipTap + Markdown source, conflict-aware autosave & restore",
+          pillar3Title: "Print Profiles & PDF Engine",
+          pillar3Desc: "215 × 275 mm mirror margins, binding gutter & print-ready PDF export",
+          booksHeading: "Your Manuscripts & Books",
+          booksSubheading: "Manage all workspace books, chapters, and print layout profiles.",
+          chaptersHeader: "Chapters",
+          addChapterBtn: "Add Chapter",
+          saveSnapshotBtn: "Save Revision Snapshot",
+          designHeading: "Print & Typography Profile (Design System)",
+          previewHeading: "Print Preview & PDF Export Engine",
+          revisionsHeading: "Revision History & Non-Destructive Restore",
+          heroEyebrow: "Your book writing workspace",
+          heroTitle: "Write. Organize. Publish.",
+          heroDesc: "A structured writing and publishing workspace for books mixing Bangla and English with 215 × 275 mm mirror-margin print profiles."
+        }
+      };
+
+      const state = {
+        locale: "bn",
+        activeView: "dashboard",
+        editorMode: "visual",
+        activeBookId: "book-1",
+        activeChapterId: "ch-2",
+        designProfile: {
+          name: "Master Book (215 × 275 mm · Mirror Margins)",
+          widthMm: 215,
+          heightMm: 275,
+          marginTopMm: 18,
+          marginBottomMm: 20,
+          marginInsideMm: 22,
+          marginOutsideMm: 16,
+          gutterMm: 5,
+          mirrorMargins: true,
+          banglaBodyFont: "Noto Serif Bengali",
+          banglaHeadingFont: "Noto Sans Bengali",
+          latinFont: "Inter",
+          bodyFontSizePt: 11,
+          lineHeight: 1.5,
+          primaryColor: "#123B6D",
+          accentColor: "#F26B21",
+          chapterStartsNewPage: true,
+          watermarkText: ""
+        },
+        books: [
+          {
+            id: "book-1",
+            title: "পিএসসি লিখিত পরীক্ষা সহায়িকা",
+            subtitle: "নন-ক্যাডার ও নন-ডিপার্টমেন্টাল অংশ — বাংলা (৪০), ইংরেজি (৪০) ও সাধারণ জ্ঞান (৪০)",
+            author: "মোঃ সোহেল রানা",
+            language: "bn",
+            targetWordCount: 60000,
+            chapters: [
+              {
+                id: "ch-1",
+                kind: "FRONTMATTER",
+                title: "প্রাককথন ও ৩ ধাপে প্রস্তুতি কৌশল",
+                revisionNumber: 1,
+                markdown: "# প্রাককথন ও ৩ ধাপে প্রস্তুতি কৌশল\n\nএই বইটি **PSC Written Examination**-কেন্দ্রিক, পরীক্ষার্থী-বান্ধব, বিশ্লেষণধর্মী এবং দ্রুত রিভিশনযোগ্য একটি দ্বিভাষিক পাণ্ডুলিপি।\n\n> 💡 **এক্সাম টিপস:** পরীক্ষার আগের রাতে শুধুমাত্র লাল চিহ্নিত অংশ (Level 1) এবং প্রতিটি অধ্যায়ের শেষ মুহূর্তের রিভিশন পাতাগুলো পড়ুন।\n\n| প্রস্তুতির ধাপ | অংশের নাম | পাঠ্যসূচির অগ্রাধিকার |\n| --- | --- | --- |\n| ধাপ ১ (🔴) | পরীক্ষার আগে অবশ্যই পড়ুন | সংজ্ঞা, মূল ধারণা, গুরুত্বপূর্ণ পার্থক্য ও সূত্র |\n| ধাপ ২ (🟡) | সময় থাকলে বিস্তারিত পড়ুন | বিশ্লেষণ, উদাহরণ, কেস স্টাডি ও উত্তর কাঠামো |\n| ধাপ ৩ (🟢) | জানা প্রয়োজন | পরিপূরক তথ্য ও সাধারণ প্রাসঙ্গিক জ্ঞান |",
+                revisions: [
+                  {
+                    id: "rev-101",
+                    revisionNumber: 1,
+                    label: "প্রাথমিক প্রাককথন ও স্টাডি গাইডলাইন",
+                    createdAt: "2026-10-14 09:30",
+                    markdown: "# প্রাককথন ও ৩ ধাপে প্রস্তুতি কৌশল\n\nএই বইটি **PSC Written Examination**-কেন্দ্রিক একটি দ্বিভাষিক পাণ্ডুলিপি।"
+                  }
+                ]
+              },
+              {
+                id: "ch-2",
+                kind: "CHAPTER",
+                title: "অধ্যায় ০১: বাংলা ব্যাকরণ ও নির্মিতি (পূর্ণমান: ৪০)",
+                revisionNumber: 2,
+                markdown: "# অধ্যায় ০১: বাংলা ব্যাকরণ ও নির্মিতি\n\nবাংলা অংশে মোট **৪০ নম্বর** নির্ধারিত। প্রবন্ধ রচনা (১৫), সারাংশ বা সারমর্ম (৫), পত্রলিখন (৫), বঙ্গানুবাদ (৫) এবং ব্যাকরণ (১০) নিয়ে লিখিত প্রশ্নপত্র গঠিত হয়।\n\n> 💡 **এক্সাম টিপস:** দাপ্তরিক পত্র বা স্মারকলিপি লেখার সময় অবশ্যই উপরে বাম পাশে **স্মারক নম্বর** এবং ডান পাশে **তারিখ** উল্লেখ করবেন।\n\n> **মূল কবিতাংশ (কাজী নজরুল ইসলাম):** দুর্গম গিরি, কান্তার-মরু, দুস্তর পারাবার / লঙ্ঘিতে হবে রাত্রি নিশীথে যাত্রীরা হুশিয়ার!\n\n> ⚠️ **পরীক্ষার্থীরা এখানে বেশি ভুল করে:** বানান শুদ্ধিতে 'দুরাবস্থা' নয়, শুদ্ধ রূপ হলো **দুরবস্থা**; 'সকল ছাত্রগণ' নয়, শুদ্ধ রূপ **সকল ছাত্র** বা **ছাত্রগণ**।\n\n## প্রশ্ন ১. 'কৃত্রিম বুদ্ধিমত্তা ও বাংলাদেশের শ্রমবাজার' শীর্ষক একটি প্রবন্ধ রচনা করুন।\n\n### উত্তর\n\n#### ভূমিকা\nচতুর্থ শিল্পবিপ্লবের এই যুগে কৃত্রিম বুদ্ধিমত্তা (Artificial Intelligence) বৈশ্বিক অর্থনীতি ও শ্রমবাজারকে দ্রুত রূপান্তরিত করছে। তথ্যপ্রযুক্তি, কৃষি, স্বাস্থ্যসেবা এবং প্রশাসনিক ব্যবস্থাপনায় এর সুদূরপ্রসারী প্রভাব রয়েছে।\n\n| খাত | কৃত্রিম বুদ্ধিমত্তার প্রয়োগ | করণীয় ও দক্ষতা উন্নয়ন |\n| --- | --- | --- |\n| তথ্যপ্রযুক্তি ও ফ্রিল্যান্সিং | অটোমেটেড কোডিং ও ডেটা অ্যানালিটিক্স | প্রম্পট ইঞ্জিনিয়ারিং ও ক্লাউড আর্কিটেকচার প্রশিক্ষণ |\n| তৈরি পোশাক ও শিল্প | স্বয়ংক্রিয় মান নিয়ন্ত্রণ ও সাপ্লাই চেইন | কারিগরি ও মেকাট্রনিক্স রিস্কিলিং |",
+                revisions: [
+                  {
+                    id: "rev-202",
+                    revisionNumber: 2,
+                    label: "স্মারক নম্বর টিপস ও বানান শুদ্ধি সতর্কতা সংযোজন",
+                    createdAt: "2026-10-14 11:15",
+                    markdown: "# অধ্যায় ০১: বাংলা ব্যাকরণ ও নির্মিতি\n\nবাংলা অংশে মোট **৪০ নম্বর** নির্ধারিত।"
+                  },
+                  {
+                    id: "rev-201",
+                    revisionNumber: 1,
+                    label: "প্রাথমিক খসড়া (Initial Baseline)",
+                    createdAt: "2026-10-14 08:45",
+                    markdown: "# অধ্যায় ০১: বাংলা ব্যাকরণ ও নির্মিতি\n\nপ্রাথমিক অধ্যায় কাঠামো।"
+                  }
+                ]
+              },
+              {
+                id: "ch-3",
+                kind: "CHAPTER",
+                title: "Chapter 02: English Essay, Letter & Reading Comprehension (Marks: 40)",
+                revisionNumber: 1,
+                markdown: "# Chapter 02: English Essay, Letter & Reading Comprehension\n\nThe 40-mark English written section evaluates analytical essay writing (15 marks), official or editorial letter drafting (5 marks), unseen reading comprehension (10 marks), and functional grammar rules (10 marks).\n\n> 💡 **এক্সাম টিপস:** Never answer reading comprehension questions using external assumptions; paraphrase strictly from the provided passage in clear grammatical sentences.\n\n## Question 1. Write an official letter to the Deputy Commissioner requesting digital library facilities.\n\n### Model Structure\n- **Sender & Memo Header:** Official designation, reference number, and date.\n- **Subject Line:** Concise, underlined administrative subject.\n- **Body Paragraphs:** Current student demand, proposed infrastructure, and budget summary.",
+                revisions: [
+                  {
+                    id: "rev-301",
+                    revisionNumber: 1,
+                    label: "Initial English module structure",
+                    createdAt: "2026-10-14 10:00",
+                    markdown: "# Chapter 02: English Essay, Letter & Reading Comprehension\n\nInitial English module."
+                  }
+                ]
+              },
+              {
+                id: "ch-4",
+                kind: "BACKMATTER",
+                title: "পরিশিষ্ট ক: বাংলাদেশ ও আন্তর্জাতিক বিষয়াবলি কুইক রিভিশন",
+                revisionNumber: 1,
+                markdown: "# পরিশিষ্ট ক: বাংলাদেশ ও আন্তর্জাতিক বিষয়াবলি কুইক রিভিশন\n\nপরীক্ষার হলে প্রবেশের পূর্বে গুরুত্বপূর্ণ সাংবিধানিক সংশোধনী, অর্থনৈতিক সমীক্ষা এবং সাম্প্রতিক আন্তর্জাতিক চুক্তিসমূহ এক নজরে রিভিশন করুন।\n\n- **সংবিধান ও রাষ্ট্রীয় সংস্কার:** মৌলিক অধিকার (অনুচ্ছেদ ২৬–৪৭ক) এবং ন্যায়পাল (অনুচ্ছেদ ৭৭)।\n- **অর্থনৈতিক সূচক:** মুদ্রাস্ফীতি নিয়ন্ত্রণ, রপ্তানি বহুমুখীকরণ এবং রেমিট্যান্স প্রবাহ।",
+                revisions: [
+                  {
+                    id: "rev-401",
+                    revisionNumber: 1,
+                    label: "Initial Appendix Snapshot",
+                    createdAt: "2026-10-14 10:20",
+                    markdown: "# পরিশিষ্ট ক: বাংলাদেশ ও আন্তর্জাতিক বিষয়াবলি কুইক রিভিশন"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      };
+
+      function showToast(msg) {
+        const banner = document.getElementById("toastBanner");
+        const text = document.getElementById("toastMessage");
+        if (!banner || !text) return;
+        text.textContent = msg;
+        banner.classList.remove("hidden");
+        setTimeout(() => {
+          banner.classList.add("hidden");
+        }, 3200);
+      }
+
+      function saveToLocalStorage() {
+        try {
+          localStorage.setItem("bookforge_state_v1", JSON.stringify({
+            books: state.books,
+            designProfile: state.designProfile,
+            locale: state.locale
+          }));
+        } catch (e) {
+          // Ignore sandbox storage restrictions
+        }
+      }
+
+      function escapeHtml(str) {
+        return String(str)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;");
+      }
+
+      function formatInline(str) {
+        return escapeHtml(str)
+          .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+          .replace(/\*([^*]+)\*/g, "<em>$1</em>")
+          .replace(/`([^`]+)`/g, "<code class='bg-gray-100 px-1 rounded text-xs'>$1</code>");
+      }
+
+      function countWords(md) {
+        const cleaned = String(md || "").replace(/[#>*_`|~-]/g, " ").trim();
+        if (!cleaned) return 0;
+        return cleaned.split(/\s+/).filter(Boolean).length;
+      }
+
+      function getActiveBook() {
+        return state.books.find((b) => b.id === state.activeBookId) || state.books[0];
+      }
+
+      function getActiveChapter() {
+        const book = getActiveBook();
+        if (!book) return null;
+        return book.chapters.find((c) => c.id === state.activeChapterId) || book.chapters[0] || null;
+      }
+
+      function detectManuscriptWarnings(md) {
+        const warnings = [];
+        if (/\$\$[^$]+\$\$|\\frac\{|\\sqrt\{/.test(md)) {
+          warnings.push("Uncompiled raw LaTeX syntax ($$ / \\frac / \\sqrt) detected; convert to clean Unicode before print.");
+        }
+        if (/[\u0400-\u04FF\u30A0-\u30FF]/.test(md)) {
+          warnings.push("Foreign script intrusion (Cyrillic/Katakana OCR artifact) detected inside manuscript text.");
+        }
+        if (/আমি আপনার OCR টেক্সটটি পরিষ্কার করে|আপনার দেওয়া টেক্সট/.test(md)) {
+          warnings.push("Conversational AI/OCR prompt residue detected in manuscript body.");
+        }
+        return warnings;
+      }
+
+      function renderMarkdownToStyledHtml(md, profile) {
+        const lines = String(md || "").replace(/\r\n/g, "\n").split("\n");
+        const htmlParts = [];
+        let i = 0;
+
+        while (i < lines.length) {
+          const line = lines[i];
+          if (line.trim() === "") {
+            i++;
+            continue;
+          }
+
+          // Headings
+          const hMatch = line.match(/^(#{1,4})\s+(.+)$/);
+          if (hMatch) {
+            const level = hMatch[1].length;
+            const sizes = { 1: "text-2xl font-bold mt-2 mb-3", 2: "text-lg font-bold mt-4 mb-2", 3: "text-base font-bold mt-3 mb-1.5", 4: "text-sm font-bold mt-2 mb-1" };
+            htmlParts.push(
+              `<h${level} class="manuscript-heading ${sizes[level]}" style="color:${profile.primaryColor};font-family:'${profile.latinFont}','${profile.banglaHeadingFont}',sans-serif;">${formatInline(hMatch[2])}</h${level}>`
+            );
+            i++;
+            continue;
+          }
+
+          // Callouts / Blockquotes
+          if (line.trim().startsWith(">")) {
+            const qLines = [];
+            while (i < lines.length && lines[i].trim().startsWith(">")) {
+              qLines.push(lines[i].replace(/^\s*>\s?/, ""));
+              i++;
+            }
+            const joined = qLines.join("\n").trim();
+            if (joined.includes("💡") || joined.includes("এক্সাম টিপস")) {
+              htmlParts.push(
+                `<aside style="background:#FFF4ED;border-left:5px solid ${profile.accentColor};padding:10px 15px;border-radius:4px;margin:10px 0;">
+                  <div style="color:${profile.accentColor};font-weight:700;font-size:12px;margin-bottom:3px;">💡 এক্সাম টিপস / পরামর্শ:</div>
+                  <div class="text-sm text-[#222222]">${formatInline(joined.replace(/^💡\s*\*\*[^*]+\*\*:?\s*/, ""))}</div>
+                </aside>`
+              );
+            } else if (joined.includes("⚠️") || joined.includes("ভুল")) {
+              htmlParts.push(
+                `<aside style="background:#fff5f5;border-left:5px solid #9E2A2B;padding:10px 15px;border-radius:4px;margin:10px 0;">
+                  <div style="color:#9E2A2B;font-weight:700;font-size:12px;margin-bottom:3px;">⚠️ পরীক্ষার্থীরা এখানে বেশি ভুল করে:</div>
+                  <div class="text-sm text-[#222222]">${formatInline(joined.replace(/^⚠️\s*\*\*[^*]+\*\*:?\s*/, ""))}</div>
+                </aside>`
+              );
+            } else {
+              htmlParts.push(
+                `<aside style="background:#F4F7FB;border-left:5px solid ${profile.primaryColor};padding:12px 16px;border-radius:4px;margin:10px 0;">
+                  <div style="color:${profile.primaryColor};font-weight:700;font-size:12px;margin-bottom:3px;">উদ্ধৃতি / মূল কবিতাংশ:</div>
+                  <div class="text-sm italic text-[#222222]">${formatInline(joined)}</div>
+                </aside>`
+              );
+            }
+            continue;
+          }
+
+          // Pipe Tables
+          if (line.trim().startsWith("|") && line.trim().endsWith("|")) {
+            const tLines = [];
+            while (i < lines.length && lines[i].trim().startsWith("|") && lines[i].trim().endsWith("|")) {
+              tLines.push(lines[i].trim());
+              i++;
+            }
+            if (tLines.length >= 2) {
+              const splitRow = (r) => r.slice(1, -1).split("|").map((c) => c.trim());
+              const headers = splitRow(tLines[0]);
+              const isSep = /^[\s|:-]+$/.test(tLines[1]);
+              const rows = (isSep ? tLines.slice(2) : tLines.slice(1)).map(splitRow);
+              const thHtml = headers.map((h) => `<th style="background:${profile.primaryColor};color:#ffffff;padding:7px 10px;text-align:left;border:1px solid #D9E2EC;font-size:12px;">${formatInline(h)}</th>`).join("");
+              const trHtml = rows.map((r, rIdx) => {
+                const bg = rIdx % 2 === 0 ? "#ffffff" : "#F8FAFC";
+                return `<tr>${r.map((c) => `<td style="background:${bg};padding:7px 10px;border:1px solid #D9E2EC;font-size:12px;">${formatInline(c)}</td>`).join("")}</tr>`;
+              }).join("");
+              htmlParts.push(`<table class="w-full border-collapse my-3"><thead><tr>${thHtml}</tr></thead><tbody>${trHtml}</tbody></table>`);
+              continue;
+            }
+          }
+
+          // Bullet Lists
+          if (/^\s*[-*]\s+/.test(line)) {
+            const items = [];
+            while (i < lines.length && /^\s*[-*]\s+/.test(lines[i])) {
+              items.push(lines[i].replace(/^\s*[-*]\s+/, "").trim());
+              i++;
+            }
+            htmlParts.push(`<ul class="list-disc pl-5 space-y-1 my-2">${items.map((it) => `<li>${formatInline(it)}</li>`).join("")}</ul>`);
+            continue;
+          }
+
+          // Paragraph
+          htmlParts.push(
+            `<p class="my-2" style="font-size:${profile.bodyFontSizePt}pt;line-height:${profile.lineHeight};font-family:'${profile.latinFont}','${profile.banglaBodyFont}',serif;">${formatInline(line)}</p>`
+          );
+          i++;
+        }
+
+        return htmlParts.join("\n");
+      }
+
+      function applyLocaleStrings() {
+        const dict = I18N[state.locale];
+        document.querySelectorAll("[data-i18n]").forEach((el) => {
+          const key = el.getAttribute("data-i18n");
+          if (key && dict[key]) {
+            el.textContent = dict[key];
+          }
+        });
+        document.getElementById("heroEyebrow").textContent = dict.heroEyebrow;
+        document.getElementById("heroTitle").textContent = dict.heroTitle;
+        document.getElementById("heroDesc").textContent = dict.heroDesc;
+
+        const btnBn = document.getElementById("btnLangBn");
+        const btnEn = document.getElementById("btnLangEn");
+        if (state.locale === "bn") {
+          btnBn.className = "rounded-full px-2.5 py-1 font-semibold bg-[#285b4b] text-white";
+          btnEn.className = "rounded-full px-2.5 py-1 font-semibold text-[#6b6964]";
+        } else {
+          btnEn.className = "rounded-full px-2.5 py-1 font-semibold bg-[#285b4b] text-white";
+          btnBn.className = "rounded-full px-2.5 py-1 font-semibold text-[#6b6964]";
+        }
+      }
+
+      function switchView(viewName) {
+        state.activeView = viewName;
+        const views = {
+          dashboard: "viewDashboard",
+          editor: "viewEditor",
+          design: "viewDesign",
+          preview: "viewPreview",
+          revisions: "viewRevisions"
+        };
+        const navs = {
+          dashboard: "navDashboard",
+          editor: "navEditor",
+          design: "navDesign",
+          preview: "navPreview",
+          revisions: "navRevisions"
+        };
+
+        Object.keys(views).forEach((k) => {
+          const el = document.getElementById(views[k]);
+          const nav = document.getElementById(navs[k]);
+          if (k === viewName) {
+            el.classList.remove("hidden");
+            nav.className = "rounded-lg px-3 py-1.5 text-xs font-semibold transition bg-[#285b4b] text-white";
+          } else {
+            el.classList.add("hidden");
+            nav.className = "rounded-lg px-3 py-1.5 text-xs font-semibold transition bg-[#f8f7f4] text-[#6b6964] hover:text-[#20201e]";
+          }
+        });
+
+        renderAll();
+      }
+
+      function renderDashboard() {
+        const grid = document.getElementById("booksGridContainer");
+        const summary = document.getElementById("dashboardStatsSummary");
+        if (!grid) return;
+
+        let totalChapters = 0;
+        let totalWordsAll = 0;
+
+        grid.innerHTML = state.books.map((book) => {
+          const bookWords = book.chapters.reduce((acc, ch) => acc + countWords(ch.markdown), 0);
+          totalChapters += book.chapters.length;
+          totalWordsAll += bookWords;
+          const pct = Math.min(100, Math.round((bookWords / Math.max(1, book.targetWordCount)) * 100));
+
+          return `
+            <article class="flex flex-col justify-between rounded-2xl border border-[#e6e2dc] bg-white p-6 shadow-sm">
+              <div>
+                <div class="flex items-center justify-between gap-2">
+                  <span class="rounded-md bg-[#edf4ef] px-2.5 py-0.5 text-xs font-semibold text-[#285b4b]">
+                    ${book.language === "bn" ? "বাংলা + English" : "English + বাংলা"}
+                  </span>
+                  <span class="text-xs font-mono text-[#6b6964]">${book.chapters.length} chapters · ${bookWords} words</span>
+                </div>
+                <h3 class="mt-3 text-xl font-bold text-[#123B6D]">${escapeHtml(book.title)}</h3>
+                <p class="mt-1 text-xs text-[#6b6964] leading-relaxed">${escapeHtml(book.subtitle || "")}</p>
+                <p class="mt-3 text-xs font-semibold text-[#20201e]">লেখক / সম্পাদক: ${escapeHtml(book.author)}</p>
+                <div class="mt-4">
+                  <div class="flex justify-between text-[11px] text-[#6b6964]">
+                    <span>Manuscript Target Progress</span>
+                    <span>${pct}%</span>
+                  </div>
+                  <div class="mt-1 h-2 w-full overflow-hidden rounded-full bg-[#f8f7f4]">
+                    <div class="h-full bg-[#285b4b]" style="width:${Math.max(6, pct)}%"></div>
+                  </div>
+                </div>
+              </div>
+              <div class="mt-6 flex flex-wrap items-center justify-between gap-2 border-t border-[#e6e2dc] pt-4">
+                <div class="flex gap-2">
+                  <button type="button" data-action="open-book" data-book-id="${book.id}" class="rounded-xl bg-[#285b4b] px-4 py-2 text-xs font-semibold text-white hover:opacity-95">
+                    Open Editor Studio →
+                  </button>
+                  <button type="button" data-action="preview-book" data-book-id="${book.id}" class="rounded-xl border border-[#e6e2dc] bg-[#f8f7f4] px-3 py-2 text-xs font-semibold text-[#123B6D] hover:bg-white">
+                    Print Preview
+                  </button>
+                </div>
+                ${state.books.length > 1 ? `<button type="button" data-action="delete-book" data-book-id="${book.id}" class="text-xs font-semibold text-[#9E2A2B] hover:underline">Delete</button>` : ""}
+              </div>
+            </article>
+          `;
+        }).join("");
+
+        summary.textContent = `${state.books.length} Books · ${totalChapters} Chapters · ${totalWordsAll} Words`;
+      }
+
+      function renderEditor() {
+        const book = getActiveBook();
+        const chapter = getActiveChapter();
+        if (!book || !chapter) return;
+
+        // Populate Book Selector
+        const selectBook = document.getElementById("selectActiveBook");
+        selectBook.innerHTML = state.books.map((b) =>
+          `<option value="${b.id}" ${b.id === book.id ? "selected" : ""}>${escapeHtml(b.title)}</option>`
+        ).join("");
+
+        // Populate Chapter List
+        const chContainer = document.getElementById("chapterListContainer");
+        chContainer.innerHTML = book.chapters.map((ch, idx) => {
+          const isActive = ch.id === chapter.id;
+          const badgeColor = ch.kind === "FRONTMATTER" ? "#285b4b" : ch.kind === "BACKMATTER" ? "#123B6D" : "#F26B21";
+          return `
+            <div class="rounded-xl border p-3 transition ${isActive ? "border-[#285b4b] bg-[#edf4ef]/70" : "border-[#e6e2dc] bg-[#f8f7f4]"}">
+              <button type="button" data-action="select-chapter" data-chapter-id="${ch.id}" class="w-full text-left">
+                <div class="flex items-center justify-between">
+                  <span class="text-[10px] font-bold uppercase tracking-wider" style="color:${badgeColor}">${ch.kind}</span>
+                  <span class="text-[10px] text-[#6b6964]">v${ch.revisionNumber} · ${countWords(ch.markdown)}w</span>
+                </div>
+                <div class="mt-1 text-xs font-bold text-[#20201e] line-clamp-2">${escapeHtml(ch.title)}</div>
+              </button>
+              <div class="mt-2 flex items-center justify-between border-t border-[#e6e2dc]/60 pt-1.5 text-[10px]">
+                <div class="flex gap-1">
+                  <button type="button" data-action="move-chapter-up" data-idx="${idx}" class="rounded border border-[#e6e2dc] bg-white px-2 py-0.5 font-bold hover:bg-[#edf4ef]">↑</button>
+                  <button type="button" data-action="move-chapter-down" data-idx="${idx}" class="rounded border border-[#e6e2dc] bg-white px-2 py-0.5 font-bold hover:bg-[#edf4ef]">↓</button>
+                </div>
+                ${book.chapters.length > 1 ? `<button type="button" data-action="delete-chapter" data-chapter-id="${ch.id}" class="text-[#9E2A2B] font-semibold hover:underline">Remove</button>` : ""}
+              </div>
+            </div>
+          `;
+        }).join("");
+
+        const totalBookWords = book.chapters.reduce((acc, c) => acc + countWords(c.markdown), 0);
+        document.getElementById("sidebarBookMetrics").textContent =
+          `Total Book: ${book.chapters.length} chapters · ${totalBookWords} words`;
+
+        // Sync inputs
+        const titleInput = document.getElementById("inputChapterTitle");
+        if (document.activeElement !== titleInput) {
+          titleInput.value = chapter.title;
+        }
+        document.getElementById("selectChapterKind").value = chapter.kind;
+
+        const mdTextarea = document.getElementById("textareaMarkdown");
+        if (document.activeElement !== mdTextarea) {
+          mdTextarea.value = chapter.markdown;
+        }
+
+        const words = countWords(chapter.markdown);
+        document.getElementById("chapterWordCounter").textContent =
+          `${words} words · ${chapter.markdown.length} chars`;
+        document.getElementById("autosaveBadge").textContent =
+          `v${chapter.revisionNumber} · Saved`;
+
+        document.getElementById("activeProfileBadgeInEditor").textContent =
+          `${state.designProfile.widthMm} × ${state.designProfile.heightMm} mm · ${state.designProfile.banglaBodyFont}`;
+
+        // Warnings
+        const warnings = detectManuscriptWarnings(chapter.markdown);
+        const warnBox = document.getElementById("editorWarningsBox");
+        if (warnings.length > 0) {
+          warnBox.classList.remove("hidden");
+          warnBox.innerHTML = warnings.map((w) => `<div>⚠️ ${escapeHtml(w)}</div>`).join("");
+        } else {
+          warnBox.classList.add("hidden");
+        }
+
+        // Visual render
+        document.getElementById("visualCanvasRender").innerHTML =
+          renderMarkdownToStyledHtml(chapter.markdown, state.designProfile);
+      }
+
+      function renderPrintPreview() {
+        const book = getActiveBook();
+        const chapter = getActiveChapter();
+        if (!book) return;
+
+        const p = state.designProfile;
+        const insideTotal = p.marginInsideMm + p.gutterMm;
+        document.getElementById("previewGeometrySummary").textContent =
+          `Trim: ${p.widthMm}mm × ${p.heightMm}mm · Mirror Margins (${p.mirrorMargins ? `Inside ${p.marginInsideMm}mm + ${p.gutterMm}mm Gutter = ${insideTotal}mm, Outside ${p.marginOutsideMm}mm` : "Symmetric"}) · Fonts: ${p.banglaBodyFont} + ${p.latinFont}`;
+
+        const scope = document.getElementById("selectExportScope").value;
+        const targetChapters = scope === "CHAPTER" && chapter ? [chapter] : book.chapters;
+
+        const container = document.getElementById("printPagesContainer");
+        container.innerHTML = targetChapters.map((ch, idx) => {
+          const pageNum = idx + 1;
+          const isLeftPage = pageNum % 2 === 0;
+          const leftPadMm = p.mirrorMargins ? (isLeftPage ? p.marginOutsideMm : insideTotal) : p.marginOutsideMm;
+          const rightPadMm = p.mirrorMargins ? (isLeftPage ? insideTotal : p.marginOutsideMm) : p.marginOutsideMm;
+          const headerLeft = isLeftPage ? book.title : ch.title;
+          const headerRight = isLeftPage ? `পৃষ্ঠা ${pageNum} (Left / Even Page)` : `${ch.title} (Right / Odd Page)`;
+
+          return `
+            <div class="print-sheet mx-auto max-w-3xl rounded-lg border border-[#D9E2EC] bg-white shadow-md relative overflow-hidden"
+                 style="padding:${p.marginTopMm * 1.4}px ${rightPadMm * 1.6}px ${p.marginBottomMm * 1.4}px ${leftPadMm * 1.6}px;">
+              <!-- Binding Gutter Indicator -->
+              <div class="no-print absolute top-0 bottom-0 ${isLeftPage ? "right-0 border-l" : "left-0 border-r"} border-dashed border-[#F26B21]/40 bg-[#FFF4ED]/40 flex items-center justify-center"
+                   style="width:${p.gutterMm * 3}px;" title="Binding Gutter (${p.gutterMm}mm)">
+              </div>
+
+              <!-- Running Header -->
+              <header class="mb-5 flex items-center justify-between border-b border-[#D9E2EC] pb-2 text-[11px] text-[#6b6964]">
+                <span class="font-semibold">${escapeHtml(headerLeft)}</span>
+                <span>${escapeHtml(headerRight)}</span>
+              </header>
+
+              <!-- Subject / Chapter Banner -->
+              <div style="background:${p.accentColor};color:#ffffff;border-radius:6px;padding:10px 16px;margin-bottom:16px;">
+                <div class="text-sm font-bold">${escapeHtml(ch.title)}</div>
+                <div class="text-[11px] opacity-90">বই: ${escapeHtml(book.title)} · লেখক: ${escapeHtml(book.author)} · Trim: ${p.widthMm}×${p.heightMm}mm</div>
+              </div>
+
+              <!-- Chapter Rendered Content -->
+              <div class="manuscript-serif space-y-3">
+                ${renderMarkdownToStyledHtml(ch.markdown, p)}
+              </div>
+
+              ${p.watermarkText ? `<div class="mt-6 text-center text-[11px] italic text-[#6b6964] opacity-75">${escapeHtml(p.watermarkText)}</div>` : ""}
+
+              <!-- Running Footer with Mirror Page Number -->
+              <footer class="mt-8 border-t border-[#D9E2EC] pt-2 flex items-center ${isLeftPage ? "justify-start" : "justify-end"} text-xs font-bold text-[#123B6D]">
+                <span>Page ${pageNum}</span>
+              </footer>
+            </div>
+          `;
+        }).join("");
+      }
+
+      function renderRevisions() {
+        const chapter = getActiveChapter();
+        if (!chapter) return;
+        document.getElementById("revisionChapterLabel").textContent = chapter.title;
+        const list = document.getElementById("revisionsListContainer");
+        const revs = chapter.revisions || [];
+
+        list.innerHTML = revs.map((rev) => `
+          <div class="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-[#e6e2dc] bg-[#f8f7f4] p-4">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="rounded-md bg-[#123B6D] px-2 py-0.5 text-xs font-bold text-white">v${rev.revisionNumber}</span>
+                <span class="text-sm font-bold text-[#20201e]">${escapeHtml(rev.label)}</span>
+              </div>
+              <div class="mt-1 text-xs text-[#6b6964]">Saved at ${escapeHtml(rev.createdAt)} · ${countWords(rev.markdown)} words</div>
+            </div>
+            <button type="button" data-action="restore-revision" data-rev-id="${rev.id}" class="rounded-lg border border-[#285b4b] bg-white px-3.5 py-1.5 text-xs font-semibold text-[#285b4b] hover:bg-[#edf4ef]">
+              ↺ Restore as New Revision (v${chapter.revisionNumber + 1})
+            </button>
+          </div>
+        `).join("");
+      }
+
+      function renderAll() {
+        applyLocaleStrings();
+        renderDashboard();
+        renderEditor();
+        renderPrintPreview();
+        renderRevisions();
+        saveToLocalStorage();
+      }
+
+      // Navigation Event Listeners
+      document.getElementById("btnBrandHome").addEventListener("click", () => switchView("dashboard"));
+      document.getElementById("navDashboard").addEventListener("click", () => switchView("dashboard"));
+      document.getElementById("navEditor").addEventListener("click", () => switchView("editor"));
+      document.getElementById("navDesign").addEventListener("click", () => switchView("design"));
+      document.getElementById("navPreview").addEventListener("click", () => switchView("preview"));
+      document.getElementById("navRevisions").addEventListener("click", () => switchView("revisions"));
+      document.getElementById("btnJumpToPrintPreview").addEventListener("click", () => switchView("preview"));
+
+      // Locale Toggle
+      document.getElementById("btnLangBn").addEventListener("click", () => {
+        state.locale = "bn";
+        renderAll();
+      });
+      document.getElementById("btnLangEn").addEventListener("click", () => {
+        state.locale = "en";
+        renderAll();
+      });
+
+      // Delegated Clicks for Dashboard, Chapter List & Revisions
+      document.body.addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-action]");
+        if (!btn) return;
+        const action = btn.getAttribute("data-action");
+
+        if (action === "open-book") {
+          state.activeBookId = btn.getAttribute("data-book-id");
+          const b = getActiveBook();
+          if (b && b.chapters[0]) state.activeChapterId = b.chapters[0].id;
+          switchView("editor");
+        } else if (action === "preview-book") {
+          state.activeBookId = btn.getAttribute("data-book-id");
+          switchView("preview");
+        } else if (action === "delete-book") {
+          const id = btn.getAttribute("data-book-id");
+          if (state.books.length > 1) {
+            state.books = state.books.filter((b) => b.id !== id);
+            state.activeBookId = state.books[0].id;
+            showToast("Book deleted from workspace.");
+            renderAll();
+          }
+        } else if (action === "select-chapter") {
+          state.activeChapterId = btn.getAttribute("data-chapter-id");
+          renderAll();
+        } else if (action === "move-chapter-up" || action === "move-chapter-down") {
+          const idx = Number(btn.getAttribute("data-idx"));
+          const dir = action === "move-chapter-up" ? -1 : 1;
+          const book = getActiveBook();
+          const targetIdx = idx + dir;
+          if (book && targetIdx >= 0 && targetIdx < book.chapters.length) {
+            const temp = book.chapters[idx];
+            book.chapters[idx] = book.chapters[targetIdx];
+            book.chapters[targetIdx] = temp;
+            showToast("Chapter order updated transactionally.");
+            renderAll();
+          }
+        } else if (action === "delete-chapter") {
+          const chId = btn.getAttribute("data-chapter-id");
+          const book = getActiveBook();
+          if (book && book.chapters.length > 1) {
+            book.chapters = book.chapters.filter((c) => c.id !== chId);
+            state.activeChapterId = book.chapters[0].id;
+            showToast("Chapter removed.");
+            renderAll();
+          }
+        } else if (action === "restore-revision") {
+          const revId = btn.getAttribute("data-rev-id");
+          const ch = getActiveChapter();
+          if (ch) {
+            const targetRev = ch.revisions.find((r) => r.id === revId);
+            if (targetRev) {
+              const nextNum = ch.revisionNumber + 1;
+              ch.revisionNumber = nextNum;
+              ch.markdown = targetRev.markdown;
+              ch.revisions.unshift({
+                id: "rev-" + Date.now(),
+                revisionNumber: nextNum,
+                label: `Restored from Revision v${targetRev.revisionNumber}`,
+                createdAt: new Date().toISOString().slice(0, 16).replace("T", " "),
+                markdown: targetRev.markdown
+              });
+              showToast(`Restored Revision v${targetRev.revisionNumber} as new Revision v${nextNum}.`);
+              switchView("editor");
+            }
+          }
+        }
+      });
+
+      // Editor Mode Toggle
+      document.getElementById("btnModeVisual").addEventListener("click", () => {
+        document.getElementById("editorPanesWrapper").className = "grid gap-0 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-[#e6e2dc]";
+        document.getElementById("paneVisualPreview").classList.remove("hidden");
+        document.getElementById("btnModeVisual").className = "rounded-lg px-3 py-1.5 text-xs font-semibold bg-[#285b4b] text-white";
+        document.getElementById("btnModeSource").className = "rounded-lg px-3 py-1.5 text-xs font-semibold bg-white text-[#6b6964] border border-[#e6e2dc]";
+      });
+      document.getElementById("btnModeSource").addEventListener("click", () => {
+        document.getElementById("editorPanesWrapper").className = "grid gap-0 grid-cols-1";
+        document.getElementById("paneVisualPreview").classList.add("hidden");
+        document.getElementById("btnModeSource").className = "rounded-lg px-3 py-1.5 text-xs font-semibold bg-[#285b4b] text-white";
+        document.getElementById("btnModeVisual").className = "rounded-lg px-3 py-1.5 text-xs font-semibold bg-white text-[#6b6964] border border-[#e6e2dc]";
+      });
+
+      // Active Book Select in Sidebar
+      document.getElementById("selectActiveBook").addEventListener("change", (e) => {
+        state.activeBookId = e.target.value;
+        const b = getActiveBook();
+        if (b && b.chapters[0]) state.activeChapterId = b.chapters[0].id;
+        renderAll();
+      });
+
+      // Live Editor Inputs
+      document.getElementById("inputChapterTitle").addEventListener("input", (e) => {
+        const ch = getActiveChapter();
+        if (ch) {
+          ch.title = e.target.value;
+          renderEditor();
+        }
+      });
+      document.getElementById("selectChapterKind").addEventListener("change", (e) => {
+        const ch = getActiveChapter();
+        if (ch) {
+          ch.kind = e.target.value;
+          renderEditor();
+        }
+      });
+      document.getElementById("textareaMarkdown").addEventListener("input", (e) => {
+        const ch = getActiveChapter();
+        if (ch) {
+          ch.markdown = e.target.value;
+          renderEditor();
+        }
+      });
+
+      // Editor Toolbar Snippet Insertion
+      function appendMarkdownSnippet(snippet) {
+        const ch = getActiveChapter();
+        if (!ch) return;
+        ch.markdown = (ch.markdown.trim() + "\n\n" + snippet + "\n");
+        document.getElementById("textareaMarkdown").value = ch.markdown;
+        renderEditor();
+        showToast("Block inserted into manuscript.");
+      }
+
+      document.getElementById("btnInsertH2").addEventListener("click", () => {
+        appendMarkdownSnippet("## প্রশ্ন ২. নতুন বিশ্লেষণধর্মী প্রশ্ন এখানে লিখুন।\n\n### উত্তর\nএখানে মডেল উত্তর শুরু করুন।");
+      });
+      document.getElementById("btnInsertTip").addEventListener("click", () => {
+        appendMarkdownSnippet("> 💡 **এক্সাম টিপস:** পরীক্ষার হলে সময় বাঁচাতে মূল পয়েন্টগুলো বুলেট আকারে উপস্থাপন করুন।");
+      });
+      document.getElementById("btnInsertQuote").addEventListener("click", () => {
+        appendMarkdownSnippet("> **মূল কবিতাংশ / উদ্ধৃতি:** যে তথ্য মনে থাকে, তা জ্ঞান; যে জ্ঞান প্রয়োগ করা যায়, সেটিই দক্ষতা।");
+      });
+      document.getElementById("btnInsertMistake").addEventListener("click", () => {
+        appendMarkdownSnippet("> ⚠️ **পরীক্ষার্থীরা এখানে বেশি ভুল করে:** ভুল ধারণা বনাম সঠিক ধারণার পার্থক্য স্পষ্টভাবে উল্লেখ করুন।");
+      });
+      document.getElementById("btnInsertTable").addEventListener("click", () => {
+        appendMarkdownSnippet("| ক্রমিক | মূল উপজীব্য | উপস্থাপনের কৌশল |\n| --- | --- | --- |\n| ০১ | সংজ্ঞা ও ধারণা | সংক্ষিপ্ত ও নির্ভুল বাক্য |\n| ০২ | উদাহরণ ও উপাত্ত | সর্বশেষ সরকারি পরিসংখ্যান |");
+      });
+      document.getElementById("btnInsertNoteSpace").addEventListener("click", () => {
+        appendMarkdownSnippet("### আমার অতিরিক্ত নোট (Student Active Recall Area)\n- ____________________________________________\n- ____________________________________________");
+      });
+
+      // Save Revision Snapshot & Conflict Simulation
+      document.getElementById("btnSaveRevisionSnapshot").addEventListener("click", () => {
+        const ch = getActiveChapter();
+        if (!ch) return;
+        const noteInput = document.getElementById("inputRevisionNote");
+        const label = noteInput.value.trim() || `Manual Snapshot v${ch.revisionNumber + 1}`;
+        ch.revisionNumber += 1;
+        ch.revisions.unshift({
+          id: "rev-" + Date.now(),
+          revisionNumber: ch.revisionNumber,
+          label,
+          createdAt: new Date().toISOString().slice(0, 16).replace("T", " "),
+          markdown: ch.markdown
+        });
+        noteInput.value = "";
+        renderAll();
+        showToast(`Saved Revision Snapshot v${ch.revisionNumber}.`);
+      });
+
+      document.getElementById("btnSimulateConflict").addEventListener("click", () => {
+        const badge = document.getElementById("autosaveBadge");
+        badge.className = "rounded-full bg-[#fff5f5] px-2.5 py-1 font-semibold text-[#9E2A2B]";
+        badge.textContent = "⚠️ Conflict Detected (Server v" + (getActiveChapter().revisionNumber + 1) + ")";
+        showToast("Optimistic concurrency guard triggered: stale revision write blocked!");
+      });
+
+      // Design Profile Presets & Save
+      function syncDesignInputsFromState() {
+        const p = state.designProfile;
+        document.getElementById("inputWidthMm").value = p.widthMm;
+        document.getElementById("inputHeightMm").value = p.heightMm;
+        document.getElementById("inputMarginTop").value = p.marginTopMm;
+        document.getElementById("inputMarginBottom").value = p.marginBottomMm;
+        document.getElementById("inputMarginInside").value = p.marginInsideMm;
+        document.getElementById("inputMarginOutside").value = p.marginOutsideMm;
+        document.getElementById("inputGutter").value = p.gutterMm;
+        document.getElementById("checkMirrorMargins").checked = p.mirrorMargins;
+        document.getElementById("selectBanglaBodyFont").value = p.banglaBodyFont;
+        document.getElementById("selectBanglaHeadingFont").value = p.banglaHeadingFont;
+        document.getElementById("selectLatinFont").value = p.latinFont;
+        document.getElementById("inputFontSizePt").value = p.bodyFontSizePt;
+        document.getElementById("inputLineHeight").value = p.lineHeight;
+        document.getElementById("inputPrimaryColor").value = p.primaryColor;
+        document.getElementById("inputAccentColor").value = p.accentColor;
+      }
+
+      document.getElementById("btnPresetMaster").addEventListener("click", () => {
+        Object.assign(state.designProfile, {
+          name: "Master Book (215 × 275 mm · Mirror Margins)",
+          widthMm: 215, heightMm: 275, marginTopMm: 18, marginBottomMm: 20,
+          marginInsideMm: 22, marginOutsideMm: 16, gutterMm: 5, mirrorMargins: true,
+          bodyFontSizePt: 11, lineHeight: 1.5, primaryColor: "#123B6D", accentColor: "#F26B21"
+        });
+        syncDesignInputsFromState();
+        renderAll();
+        showToast("Applied 215 × 275 mm Master Book preset.");
+      });
+
+      document.getElementById("btnPresetTrade").addEventListener("click", () => {
+        Object.assign(state.designProfile, {
+          name: "Trade Paperback (152 × 229 mm)",
+          widthMm: 152, heightMm: 229, marginTopMm: 16, marginBottomMm: 18,
+          marginInsideMm: 20, marginOutsideMm: 14, gutterMm: 4, mirrorMargins: true,
+          bodyFontSizePt: 10.5, lineHeight: 1.48
+        });
+        syncDesignInputsFromState();
+        renderAll();
+        showToast("Applied Trade Paperback (152 × 229 mm) preset.");
+      });
+
+      document.getElementById("btnPresetA5").addEventListener("click", () => {
+        Object.assign(state.designProfile, {
+          name: "Academic A5 (148 × 210 mm)",
+          widthMm: 148, heightMm: 210, marginTopMm: 15, marginBottomMm: 16,
+          marginInsideMm: 18, marginOutsideMm: 14, gutterMm: 4, mirrorMargins: true,
+          bodyFontSizePt: 10.5, lineHeight: 1.45
+        });
+        syncDesignInputsFromState();
+        renderAll();
+        showToast("Applied Academic A5 (148 × 210 mm) preset.");
+      });
+
+      document.getElementById("btnSaveDesignProfile").addEventListener("click", () => {
+        state.designProfile.widthMm = Number(document.getElementById("inputWidthMm").value) || 215;
+        state.designProfile.heightMm = Number(document.getElementById("inputHeightMm").value) || 275;
+        state.designProfile.marginTopMm = Number(document.getElementById("inputMarginTop").value) || 18;
+        state.designProfile.marginBottomMm = Number(document.getElementById("inputMarginBottom").value) || 20;
+        state.designProfile.marginInsideMm = Number(document.getElementById("inputMarginInside").value) || 22;
+        state.designProfile.marginOutsideMm = Number(document.getElementById("inputMarginOutside").value) || 16;
+        state.designProfile.gutterMm = Number(document.getElementById("inputGutter").value) || 5;
+        state.designProfile.mirrorMargins = document.getElementById("checkMirrorMargins").checked;
+        state.designProfile.banglaBodyFont = document.getElementById("selectBanglaBodyFont").value;
+        state.designProfile.banglaHeadingFont = document.getElementById("selectBanglaHeadingFont").value;
+        state.designProfile.latinFont = document.getElementById("selectLatinFont").value;
+        state.designProfile.bodyFontSizePt = Number(document.getElementById("inputFontSizePt").value) || 11;
+        state.designProfile.lineHeight = Number(document.getElementById("inputLineHeight").value) || 1.5;
+        state.designProfile.primaryColor = document.getElementById("inputPrimaryColor").value;
+        state.designProfile.accentColor = document.getElementById("inputAccentColor").value;
+        state.designProfile.chapterStartsNewPage = document.getElementById("checkChapterNewPage").checked;
+        state.designProfile.watermarkText = document.getElementById("inputWatermark").value.trim();
+
+        renderAll();
+        showToast("Design profile updated — manuscript content untouched.");
+      });
+
+      // Print Preview Controls
+      document.getElementById("selectExportScope").addEventListener("change", () => renderPrintPreview());
+      document.getElementById("btnTriggerPrintPdf").addEventListener("click", () => {
+        window.print();
+      });
+      document.getElementById("btnDownloadPrintHtml").addEventListener("click", () => {
+        const book = getActiveBook();
+        const htmlBlob = new Blob([document.getElementById("printPagesContainer").innerHTML], { type: "text/html;charset=utf-8" });
+        const url = URL.createObjectURL(htmlBlob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = (book ? book.id : "bookforge") + "-typeset-print.html";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast("Downloaded typeset print HTML.");
+      });
+
+      // Create Book Modal
+      function toggleCreateBookModal(show) {
+        document.getElementById("modalCreateBook").classList.toggle("hidden", !show);
+      }
+      document.getElementById("btnOpenCreateBookModal").addEventListener("click", () => toggleCreateBookModal(true));
+      document.getElementById("btnCloseCreateBookModal").addEventListener("click", () => toggleCreateBookModal(false));
+      document.getElementById("btnCancelCreateBook").addEventListener("click", () => toggleCreateBookModal(false));
+      document.getElementById("formCreateBook").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const title = document.getElementById("inputBookTitle").value.trim();
+        const subtitle = document.getElementById("inputBookSubtitle").value.trim();
+        const author = document.getElementById("inputBookAuthor").value.trim();
+        const lang = document.getElementById("selectBookLanguage").value;
+        if (title.length < 2) return;
+
+        const newBook = {
+          id: "book-" + Date.now(),
+          title,
+          subtitle: subtitle || "দ্বিভাষিক মুদ্রণযোগ্য পাণ্ডুলিপি",
+          author: author || "লেখক",
+          language: lang,
+          targetWordCount: 45000,
+          chapters: [
+            {
+              id: "ch-" + Date.now(),
+              kind: "CHAPTER",
+              title: lang === "bn" ? "অধ্যায় ০১: সূচনা" : "Chapter 01: Introduction",
+              revisionNumber: 1,
+              markdown: `# ${title}\n\n> 💡 **এক্সাম টিপস:** এখানে আপনার নতুন বইয়ের প্রথম অধ্যায় শুরু করুন।`,
+              revisions: [
+                {
+                  id: "rev-" + Date.now(),
+                  revisionNumber: 1,
+                  label: "Initial Book Creation",
+                  createdAt: new Date().toISOString().slice(0, 16).replace("T", " "),
+                  markdown: `# ${title}`
+                }
+              ]
+            }
+          ]
+        };
+        state.books.unshift(newBook);
+        state.activeBookId = newBook.id;
+        state.activeChapterId = newBook.chapters[0].id;
+        document.getElementById("inputBookTitle").value = "";
+        document.getElementById("inputBookSubtitle").value = "";
+        toggleCreateBookModal(false);
+        renderAll();
+        showToast("Created new book project.");
+      });
+
+      // Add Chapter Modal
+      function toggleAddChapterModal(show) {
+        document.getElementById("modalAddChapter").classList.toggle("hidden", !show);
+      }
+      document.getElementById("btnOpenAddChapterModal").addEventListener("click", () => toggleAddChapterModal(true));
+      document.getElementById("btnCloseAddChapterModal").addEventListener("click", () => toggleAddChapterModal(false));
+      document.getElementById("btnCancelAddChapter").addEventListener("click", () => toggleAddChapterModal(false));
+      document.getElementById("formAddChapter").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const book = getActiveBook();
+        const title = document.getElementById("inputNewChapterTitle").value.trim();
+        const kind = document.getElementById("selectNewChapterKind").value;
+        if (!book || !title) return;
+
+        const newCh = {
+          id: "ch-" + Date.now(),
+          kind,
+          title,
+          revisionNumber: 1,
+          markdown: `# ${title}\n\nএখানে আপনার অধ্যায়ের মূল আলোচনা লিখুন...`,
+          revisions: [
+            {
+              id: "rev-" + Date.now(),
+              revisionNumber: 1,
+              label: "Initial Chapter Creation",
+              createdAt: new Date().toISOString().slice(0, 16).replace("T", " "),
+              markdown: `# ${title}`
+            }
+          ]
+        };
+        book.chapters.push(newCh);
+        state.activeChapterId = newCh.id;
+        document.getElementById("inputNewChapterTitle").value = "";
+        toggleAddChapterModal(false);
+        renderAll();
+        showToast("Added new chapter.");
+      });
+
+      // Import Modal & Validation Pipeline
+      function toggleImportModal(show) {
+        document.getElementById("modalImport").classList.toggle("hidden", !show);
+      }
+      document.getElementById("btnOpenImportModal").addEventListener("click", () => toggleImportModal(true));
+      document.getElementById("btnHeroImport").addEventListener("click", () => toggleImportModal(true));
+      document.getElementById("btnCloseImportModal").addEventListener("click", () => toggleImportModal(false));
+
+      const defaultImportSample = "# অধ্যায় ০৩: বাংলাদেশের সংবিধান ও রাষ্ট্রীয় সংস্কার\n\n> 💡 **এক্সাম টিপস:** সংবিধানের মৌলিক অধিকারসমূহ (অনুচ্ছেদ ২৬–৪৭ক) তুলনামূলক ছকে অনুশীলন করুন।\n\nগণপ্রজাতন্ত্রী বাংলাদেশের সংবিধান রাষ্ট্র পরিচালনার সর্বোচ্চ আইন।";
+      document.getElementById("textareaImportPayload").value = defaultImportSample;
+
+      document.getElementById("btnFixtureCleanMd").addEventListener("click", () => {
+        document.getElementById("selectImportFormat").value = "MARKDOWN";
+        document.getElementById("inputImportFilename").value = "chapter_03_constitution.md";
+        document.getElementById("textareaImportPayload").value = defaultImportSample;
+      });
+      document.getElementById("btnFixtureDocxWarnings").addEventListener("click", () => {
+        document.getElementById("selectImportFormat").value = "DOCX";
+        document.getElementById("inputImportFilename").value = "ocr_draft_with_warnings.docx";
+        document.getElementById("textareaImportPayload").value =
+          "# অধ্যায় ০৪: সাধারণ বিজ্ঞান ও প্রযুক্তি\n\nআমি আপনার OCR টেক্সটটি পরিষ্কার করে সাজিয়ে দিয়েছি।\n\nউত্তর строго প্যাসেজের তথ্যের মধ্যে রাখতে হবে।\n\n$$\\frac{3}{5} + \\sqrt{2}$$\n\n<w:tbl><w:vMerge/></w:tbl>";
+      });
+      document.getElementById("btnFixtureZipAttack").addEventListener("click", () => {
+        document.getElementById("selectImportFormat").value = "ZIP";
+        document.getElementById("inputImportFilename").value = "../../etc/passwd";
+        document.getElementById("textareaImportPayload").value = "# Malicious Path Traversal Archive Test";
+      });
+
+      function runImportValidation() {
+        const fmt = document.getElementById("selectImportFormat").value;
+        const fname = document.getElementById("inputImportFilename").value.trim();
+        const payload = document.getElementById("textareaImportPayload").value;
+        const reportBox = document.getElementById("importValidationReportBox");
+
+        if (fname.startsWith("/") || fname.includes("../") || fname.includes("..\\")) {
+          reportBox.innerHTML = `<div class="text-[#9E2A2B] font-bold">❌ Security Block: Rejected archive path traversal entry "${escapeHtml(fname)}".</div>`;
+          return { valid: false };
+        }
+        if (/\.(exe|sh|bat|cmd|js|php)$/i.test(fname)) {
+          reportBox.innerHTML = `<div class="text-[#9E2A2B] font-bold">❌ Security Block: Disallowed executable payload "${escapeHtml(fname)}".</div>`;
+          return { valid: false };
+        }
+
+        const warnings = detectManuscriptWarnings(payload);
+        if (fmt === "DOCX" && /<w:tbl|w:vMerge/.test(payload)) {
+          warnings.push("DOCX Parser Warning: Complex merged Word table cells detected; converted to standard Markdown pipe table without dropping text.");
+        }
+
+        const cleanMd = payload.replace(/<[^>]+>/g, "").trim();
+        const words = countWords(cleanMd);
+
+        reportBox.innerHTML = `
+          <div class="font-bold text-[#285b4b]">✓ Validation Passed (${escapeHtml(fmt)} · ${words} words)</div>
+          ${warnings.length > 0
+            ? `<div class="mt-2 space-y-1 text-[#9E2A2B] font-medium">${warnings.map((w) => `<div>⚠️ ${escapeHtml(w)}</div>`).join("")}</div>`
+            : `<div class="text-[#6b6964]">No formatting, encoding, or security warnings found.</div>`
+          }
+        `;
+        return { valid: true, cleanMd, title: (cleanMd.match(/^#\s+(.+)$/m) || [null, fname])[1] };
+      }
+
+      document.getElementById("btnValidateImport").addEventListener("click", () => {
+        runImportValidation();
+      });
+
+      document.getElementById("btnConfirmImport").addEventListener("click", () => {
+        const res = runImportValidation();
+        if (!res.valid) {
+          showToast("Import blocked by security validation.");
+          return;
+        }
+        const book = getActiveBook();
+        if (!book) return;
+        const newCh = {
+          id: "ch-imp-" + Date.now(),
+          kind: "CHAPTER",
+          title: res.title,
+          revisionNumber: 1,
+          markdown: res.cleanMd,
+          revisions: [
+            {
+              id: "rev-imp-" + Date.now(),
+              revisionNumber: 1,
+              label: "Imported via Validated Pipeline",
+              createdAt: new Date().toISOString().slice(0, 16).replace("T", " "),
+              markdown: res.cleanMd
+            }
+          ]
+        };
+        book.chapters.push(newCh);
+        state.activeChapterId = newCh.id;
+        toggleImportModal(false);
+        switchView("editor");
+        showToast("Imported chapter into active book.");
+      });
+
+      // Initialize
+      renderAll();
+    })();
+  </script>
+</body>
+</html>

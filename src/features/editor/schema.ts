@@ -1,3 +1,67 @@
+export const CURRENT_CANONICAL_SCHEMA_VERSION = 1;
+
+export type CalloutVariant = "EXAM_TIP" | "QUOTE" | "COMMON_MISTAKE" | "NOTE";
+
+export type CanonicalBlock =
+  | {
+      type: "heading";
+      level: 1 | 2 | 3 | 4;
+      text: string;
+    }
+  | {
+      type: "paragraph";
+      text: string;
+    }
+  | {
+      type: "callout";
+      variant: CalloutVariant;
+      label: string;
+      text: string;
+    }
+  | {
+      type: "bullet_list";
+      items: string[];
+    }
+  | {
+      type: "ordered_list";
+      items: string[];
+    }
+  | {
+      type: "code_block";
+      language: string;
+      code: string;
+    }
+  | {
+      type: "table";
+      headers: string[];
+      rows: string[][];
+    }
+  | {
+      type: "image";
+      src: string;
+      alt: string;
+      caption?: string;
+    }
+  | {
+      type: "horizontal_rule";
+    }
+  | {
+      type: "unsupported_raw";
+      rawMarkdown: string;
+      reason: string;
+    };
+
+export interface CanonicalDocument {
+  schemaVersion: number;
+  blocks: CanonicalBlock[];
+}
+
+export interface ConversionResult {
+  document: CanonicalDocument;
+  markdown: string;
+  warnings: string[];
+}
+
 import { getSchema } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";

@@ -20,6 +20,11 @@ export const workspaceMessages = {
       UNSUPPORTED_CONTENT: "This chapter uses an unsupported content format. Its stored content has not been changed.",
       IDENTITY_DISABLED: "Workspace disabled. For local development, set BOOKFORGE_DEV_IDENTITY=true in .env and run npm run dev. Production requires real authentication.",
       UNAVAILABLE: "Could not reach the workspace. Check the database connection and migrations, then retry. Your unsaved text is kept here.",
+      FORBIDDEN: "You do not have permission to perform this action.",
+      AI_DISABLED: "AI features are unavailable. The AI provider is not configured.",
+      AI_PROVIDER_ERROR: "The AI provider returned an error. Please try again later.",
+      EXPORT_FORMAT_UNSUPPORTED: "This export format is not supported.",
+      INVITE_EXPIRED: "This invitation has expired. Please request a new invitation.",
     },
   },
   bn: {
@@ -40,6 +45,11 @@ export const workspaceMessages = {
       UNSUPPORTED_CONTENT: "এই অধ্যায়ের লেখার ধরন এখনো সমর্থিত নয়। সংরক্ষিত লেখা বদলানো হয়নি।",
       IDENTITY_DISABLED: "কর্মক্ষেত্র বন্ধ আছে। স্থানীয় ডেভেলপমেন্টে .env-এ BOOKFORGE_DEV_IDENTITY=true দিয়ে npm run dev চালান। প্রোডাকশনে প্রকৃত লগইন প্রয়োজন।",
       UNAVAILABLE: "কর্মক্ষেত্রে সংযোগ করা যায়নি। ডেটাবেস সংযোগ ও মাইগ্রেশন যাচাই করে আবার চেষ্টা করুন। অসংরক্ষিত লেখা এখানেই আছে।",
+      FORBIDDEN: "এই কাজটি করার অনুমতি আপনার নেই।",
+      AI_DISABLED: "AI সুবিধা পাওয়া যাচ্ছে না। AI প্রদানকারী কনফিগার করা হয়নি।",
+      AI_PROVIDER_ERROR: "AI প্রদানকারী একটি ত্রুটি ফেরত দিয়েছে। পরে আবার চেষ্টা করুন।",
+      EXPORT_FORMAT_UNSUPPORTED: "এই রপ্তানি ফরম্যাটটি সমর্থিত নয়।",
+      INVITE_EXPIRED: "এই আমন্ত্রণের মেয়াদ শেষ হয়ে গেছে। নতুন আমন্ত্রণের জন্য অনুরোধ করুন।",
     },
   },
 } satisfies Record<Locale, { errors: Record<ErrorCode, string> } & Record<string, unknown>>;
